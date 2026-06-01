@@ -3,26 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rise 2.0 — Coach OS</title>
+<title>Rise Modern Wellness — Coach OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <style>
 
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap');
-
 :root {
-  --bg: #0E0E0F;
-  --surface: #161618;
-  --border: #252528;
-  --text: #E8E4DC;
-  --muted: #5A5A62;
-  --gold: #C9A84C;
-  --gold-dim: rgba(201,168,76,0.15);
-  --vitality: #6B9E7A;
+  --bg:        #FDF6EE;
+  --surface:   #FFFFFF;
+  --surface2:  #FBF0E4;
+  --border:    #E8CEB0;
+  --border-lt: #F0DECA;
+  --text:      #3A2A1A;
+  --muted:     #9C7A5A;
+  --brand:     #E99B67;
+  --brand-dim: rgba(233,155,103,0.15);
+  --brand-mid: #EAAC80;
+  --brand-lt:  #EECAAA;
+  --brand-xlt: #F8DDBD;
+  --vitality:   #6B9E7A;
   --aesthetics: #C47B84;
-  --injury: #9B75B8;
-  --committed: #5B8FBF;
-  --triage: #D4956A;
-  --single: #4A4A52;
-  --addon: #3A7A7A;
+  --injury:     #9B75B8;
+  --committed:  #5B8FBF;
+  --triage:     #D4956A;
+  --single:     #999;
+  --addon:      #3A7A7A;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -30,611 +35,245 @@
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'Outfit', sans-serif;
-  height: 100vh;
+  font-family: 'Nunito', sans-serif;
+  height: 100dvh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
+/* ── HEADER ── */
 .header {
-  padding: 16px 28px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  padding: 11px 20px;
+  display: flex; align-items: center; justify-content: space-between;
   border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
+  background: var(--surface);
+  flex-shrink: 0; gap: 10px;
+  box-shadow: 0 1px 6px rgba(180,120,60,0.07);
 }
-.brand { font-family: 'Cormorant Garamond', serif; font-size: 17px; color: var(--text); }
-.brand em { color: var(--gold); font-style: normal; }
-.breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
-.bc-item { color: var(--muted); cursor: pointer; padding: 3px 9px; border-radius: 20px; transition: all 0.2s; }
-.bc-item:hover { color: var(--text); }
-.bc-item.active { color: var(--gold); background: var(--gold-dim); }
-.bc-sep { color: var(--border); }
-.hint { font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
+.brand { font-family:'Cormorant Garamond',serif; font-size:17px; color:var(--text); white-space:nowrap; letter-spacing:0.02em; }
+.brand em { color:var(--brand); font-style:normal; }
+.breadcrumb { display:flex; align-items:center; gap:4px; font-size:10px; color:var(--muted); flex-wrap:wrap; flex:1; justify-content:center; letter-spacing:0.05em; text-transform:uppercase; }
+.bc-item { color:var(--muted); padding:2px 8px; border-radius:20px; }
+.bc-item.active { color:var(--brand); background:var(--brand-dim); font-weight:600; }
+.bc-sep { color:var(--border); }
+.hint { font-size:10px; color:var(--muted); letter-spacing:0.04em; white-space:nowrap; }
 
-/* TAB NAV */
-.tab-nav {
-  display: flex; gap: 2px;
-  background: #111113;
-  border-bottom: 1px solid var(--border);
-  padding: 0 28px;
-  flex-shrink: 0;
-}
-.tab-btn {
-  padding: 10px 18px;
-  font-size: 11px; letter-spacing: 0.08em;
-  text-transform: uppercase; font-weight: 500;
-  color: var(--muted); cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: all 0.2s; background: none;
-  border-top: none; border-left: none; border-right: none;
-  font-family: 'Outfit', sans-serif;
-}
-.tab-btn:hover { color: var(--text); }
-.tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+/* ── CANVAS ── */
+.canvas { flex:1; position:relative; overflow:hidden; background:var(--bg); }
 
-/* TAB PANELS */
-.tab-panel { display: none; flex: 1; overflow: hidden; }
-.tab-panel.active { display: flex; flex-direction: column; }
+svg.connectors { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:1; }
 
-/* ── SERVICE MAP STYLES ── */
-.smap-wrap {
-  flex: 1; display: flex; flex-direction: column;
-  padding: 28px 36px 20px; overflow: hidden;
-}
-.smap-header {
-  display: flex; align-items: flex-start;
-  justify-content: space-between; margin-bottom: 20px; flex-shrink: 0;
-}
-.smap-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 22px; color: var(--text); margin-bottom: 4px;
-}
-.smap-sub { font-size: 12px; color: var(--muted); max-width: 480px; line-height: 1.5; }
-
-/* Stage toggle */
-.stage-toggle {
-  display: flex; gap: 6px; flex-shrink: 0;
-}
-.stg-btn {
-  padding: 7px 16px; border-radius: 20px;
-  font-size: 11px; font-weight: 600; letter-spacing: 0.07em;
-  text-transform: uppercase; cursor: pointer;
-  border: 1px solid var(--border); background: transparent;
-  color: var(--muted); transition: all 0.25s;
-  font-family: 'Outfit', sans-serif;
-}
-.stg-btn:hover { color: var(--text); border-color: #444; }
-.stg-btn.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
-
-/* Chart area */
-.chart-area {
-  flex: 1; position: relative;
-  border: 1px solid var(--border); border-radius: 14px;
-  background: #111113; overflow: hidden;
-}
-
-/* Band zones */
-.band-zone {
-  position: absolute; left: 0; right: 0;
-  transition: all 0.4s ease;
-}
-.band-core {
-  top: 0; height: 28%;
-  background: linear-gradient(180deg, rgba(107,158,122,0.07) 0%, rgba(107,158,122,0.03) 100%);
-  border-bottom: 1px dashed rgba(107,158,122,0.15);
-}
-.band-secondary {
-  top: 28%; height: 26%;
-  background: linear-gradient(180deg, rgba(91,143,191,0.05) 0%, rgba(91,143,191,0.02) 100%);
-  border-bottom: 1px dashed rgba(91,143,191,0.12);
-}
-.band-migration {
-  top: 54%; height: 18%;
-  background: linear-gradient(180deg, rgba(201,168,76,0.05) 0%, rgba(201,168,76,0.02) 100%);
-  border-bottom: 1px dashed rgba(201,168,76,0.12);
-}
-.band-event {
-  top: 72%; bottom: 0;
-  background: linear-gradient(180deg, rgba(90,90,98,0.04) 0%, transparent 100%);
-}
-
-/* Axis labels */
-.axis-y {
-  position: absolute; left: 14px; top: 0; bottom: 0;
-  display: flex; flex-direction: column;
-  justify-content: space-around; pointer-events: none;
-  padding: 14px 0;
-}
-.axis-y-label {
-  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--muted); writing-mode: vertical-rl;
-  text-orientation: mixed; transform: rotate(180deg);
-  white-space: nowrap;
-}
-.axis-x {
-  position: absolute; bottom: 10px; left: 60px; right: 20px;
-  display: flex; justify-content: space-between;
-  font-size: 10px; color: var(--muted); letter-spacing: 0.08em;
-  text-transform: uppercase; pointer-events: none;
-}
-
-/* Band labels on right */
-.band-label {
-  position: absolute; right: 14px;
-  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
-  font-weight: 600; opacity: 0.7;
-}
-.band-label.core { top: 8px; color: var(--vitality); }
-.band-label.secondary { top: 31%; color: var(--committed); }
-.band-label.migration { top: 56%; color: var(--gold); }
-.band-label.event { top: 74%; color: var(--muted); }
-
-/* Service dots */
-.svc-dot {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  cursor: pointer;
-  transition: left 0.7s cubic-bezier(0.34,1.56,0.64,1),
-              top 0.7s cubic-bezier(0.34,1.56,0.64,1),
-              opacity 0.4s;
-  z-index: 5;
-}
-.svc-dot-inner {
-  border-radius: 8px;
-  padding: 7px 12px;
-  font-size: 11px; font-weight: 500;
-  white-space: nowrap;
-  border: 1px solid;
-  transition: all 0.25s;
-  position: relative;
-}
-.svc-dot:hover .svc-dot-inner {
-  transform: scale(1.1);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  z-index: 10;
-}
-
-/* Dot color types */
-.dot-core .svc-dot-inner { background: rgba(107,158,122,0.15); border-color: rgba(107,158,122,0.5); color: #8EC99D; }
-.dot-secondary .svc-dot-inner { background: rgba(91,143,191,0.12); border-color: rgba(91,143,191,0.4); color: #7AAFD4; }
-.dot-migration .svc-dot-inner { background: rgba(201,168,76,0.12); border-color: rgba(201,168,76,0.4); color: var(--gold); }
-.dot-event .svc-dot-inner { background: rgba(90,90,98,0.2); border-color: rgba(90,90,98,0.4); color: #888; }
-
-/* Migration arrow indicator */
-.migration-arrow {
-  position: absolute; right: -8px; top: 50%;
-  transform: translateY(-50%);
-  font-size: 10px; color: var(--gold);
-  opacity: 0; transition: opacity 0.4s;
-  pointer-events: none;
-}
-.dot-migration.migrated .migration-arrow { opacity: 1; }
-.dot-migration.migrated .svc-dot-inner {
-  background: rgba(91,143,191,0.15);
-  border-color: rgba(91,143,191,0.5);
-  color: #7AAFD4;
-  box-shadow: 0 0 16px rgba(91,143,191,0.2);
-}
-
-/* Stage indicator bar */
-.stage-indicator {
-  display: flex; align-items: center; gap: 0;
-  margin-bottom: 14px; flex-shrink: 0;
-}
-.stage-pip {
-  height: 3px; flex: 1;
-  background: var(--border); border-radius: 2px;
-  transition: background 0.4s;
-  margin: 0 2px;
-}
-.stage-pip.active { background: var(--gold); }
-.stage-pip-label {
-  font-size: 10px; color: var(--muted); letter-spacing: 0.06em;
-  text-transform: uppercase; margin-right: 8px; white-space: nowrap;
-}
-
-/* Service tooltip for chart */
-.svc-tip {
-  position: fixed; background: #1C1C1F;
-  border: 1px solid var(--border); border-radius: 10px;
-  padding: 12px 15px; max-width: 220px;
-  font-size: 12px; line-height: 1.6; color: #bbb;
-  pointer-events: none; z-index: 300;
-  opacity: 0; transition: opacity 0.12s;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.7);
-}
-.svc-tip.visible { opacity: 1; }
-.svc-tip-name { font-family: 'Cormorant Garamond', serif; font-size: 14px; color: var(--text); margin-bottom: 4px; }
-.svc-tip-tag { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 6px; }
-
-.canvas {
-  flex: 1;
-  position: relative;
-  overflow: hidden;
-}
-
-svg.connectors {
-  position: absolute; top: 0; left: 0;
-  width: 100%; height: 100%;
-  pointer-events: none; z-index: 1;
-}
-
+/* ── DESKTOP STAGES ── */
 .flow-stage {
-  position: absolute; top: 0; bottom: 0;
-  display: flex; flex-direction: column;
-  justify-content: center; align-items: center;
-  gap: 9px; z-index: 2;
-  transition: opacity 0.35s;
+  position:absolute; top:0; bottom:0;
+  display:flex; flex-direction:column;
+  justify-content:center; align-items:center;
+  gap:9px; z-index:2; transition:opacity 0.35s;
 }
-.flow-stage.hidden { opacity: 0; pointer-events: none; }
-.flow-stage.dimmed { opacity: 0.2; pointer-events: none; }
+.flow-stage.hidden { opacity:0; pointer-events:none; }
+.flow-stage.dimmed { opacity:0.2; pointer-events:none; }
 
 .stage-label {
-  position: absolute; top: 18px;
-  font-size: 10px; letter-spacing: 0.13em;
-  text-transform: uppercase; color: var(--muted);
-  text-align: center; white-space: nowrap;
+  position:absolute; top:14px;
+  font-size:9px; letter-spacing:0.14em; text-transform:uppercase;
+  color:var(--muted); text-align:center; white-space:nowrap; font-weight:600;
 }
 
-/* NODES */
-.node {
-  position: relative; cursor: pointer;
-  transition: all 0.22s; user-select: none;
-}
+/* ── NODES ── */
+.node { position:relative; cursor:pointer; transition:all 0.22s; user-select:none; }
 .node-inner {
-  border: 1px solid var(--border); border-radius: 10px;
-  padding: 13px 18px; background: var(--surface);
-  transition: all 0.22s; position: relative;
-  overflow: hidden; min-width: 155px; text-align: center;
+  border:1.5px solid var(--border); border-radius:12px;
+  padding:13px 18px; background:var(--surface);
+  transition:all 0.22s; position:relative;
+  overflow:hidden; min-width:155px; text-align:center;
+  box-shadow:0 2px 8px rgba(180,120,60,0.06);
 }
-.node-inner::before {
-  content: ''; position: absolute;
-  top: 0; left: 0; right: 0; height: 2px;
-  opacity: 0; transition: opacity 0.22s;
-}
-.node:hover .node-inner, .node.active .node-inner {
-  transform: scale(1.04);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.5);
-}
-.node:hover .node-inner::before, .node.active .node-inner::before { opacity: 1; }
+.node-inner::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; opacity:0; transition:opacity 0.22s; }
+.node:hover .node-inner, .node.active .node-inner { transform:scale(1.04); box-shadow:0 6px 24px rgba(180,120,60,0.15); }
+.node:hover .node-inner::before, .node.active .node-inner::before { opacity:1; }
 
-/* COLOR VARIANTS */
-.vitality-node:hover .node-inner, .vitality-node.active .node-inner { border-color: var(--vitality); box-shadow: 0 0 28px rgba(107,158,122,0.18); }
-.vitality-node .node-inner::before { background: var(--vitality); }
-.aesthetics-node:hover .node-inner, .aesthetics-node.active .node-inner { border-color: var(--aesthetics); box-shadow: 0 0 28px rgba(196,123,132,0.18); }
-.aesthetics-node .node-inner::before { background: var(--aesthetics); }
-.injury-node:hover .node-inner, .injury-node.active .node-inner { border-color: var(--injury); box-shadow: 0 0 28px rgba(155,117,184,0.18); }
-.injury-node .node-inner::before { background: var(--injury); }
-.committed-node:hover .node-inner, .committed-node.active .node-inner { border-color: var(--committed); box-shadow: 0 0 28px rgba(91,143,191,0.18); }
-.committed-node .node-inner::before { background: var(--committed); }
-.triage-node:hover .node-inner, .triage-node.active .node-inner { border-color: var(--triage); box-shadow: 0 0 28px rgba(212,149,106,0.18); }
-.triage-node .node-inner::before { background: var(--triage); }
-.single-node:hover .node-inner, .single-node.active .node-inner { border-color: var(--single); }
-.single-node .node-inner::before { background: var(--single); }
-.node:hover .node-inner { border-color: var(--gold); }
+.vitality-node:hover .node-inner,  .vitality-node.active .node-inner  { border-color:var(--vitality);   box-shadow:0 4px 20px rgba(107,158,122,0.2); }
+.vitality-node .node-inner::before  { background:var(--vitality); }
+.aesthetics-node:hover .node-inner, .aesthetics-node.active .node-inner { border-color:var(--aesthetics); box-shadow:0 4px 20px rgba(196,123,132,0.2); }
+.aesthetics-node .node-inner::before { background:var(--aesthetics); }
+.injury-node:hover .node-inner,    .injury-node.active .node-inner    { border-color:var(--injury);     box-shadow:0 4px 20px rgba(155,117,184,0.2); }
+.injury-node .node-inner::before    { background:var(--injury); }
+.committed-node:hover .node-inner,  .committed-node.active .node-inner { border-color:var(--committed);  box-shadow:0 4px 20px rgba(91,143,191,0.2); }
+.committed-node .node-inner::before { background:var(--committed); }
+.triage-node:hover .node-inner,    .triage-node.active .node-inner    { border-color:var(--triage);     box-shadow:0 4px 20px rgba(212,149,106,0.2); }
+.triage-node .node-inner::before    { background:var(--triage); }
+.single-node:hover .node-inner,    .single-node.active .node-inner    { border-color:var(--single); }
+.single-node .node-inner::before    { background:var(--single); }
+.node:hover .node-inner { border-color:var(--brand); }
 
-/* ADD-ON NODES — satellite style */
-.addon-satellite {
-  position: absolute;
-  z-index: 3;
-  cursor: default;
-  opacity: 0;
-  transition: opacity 0.4s;
-  pointer-events: none;
-}
-.addon-satellite.visible {
-  opacity: 1;
-  pointer-events: all;
-}
-.addon-satellite .node-inner {
-  min-width: 120px;
-  padding: 9px 13px;
-  border-style: dashed;
-  border-color: var(--addon);
-  background: rgba(22,22,24,0.95);
-}
-.addon-satellite .node-inner::before { background: var(--addon); }
-.addon-satellite:hover .node-inner {
-  border-color: var(--addon);
-  border-style: dashed;
-  box-shadow: 0 0 20px rgba(58,122,122,0.25);
-  transform: scale(1.04);
-}
-.addon-label-tag {
-  font-size: 9px; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--addon);
-  margin-bottom: 3px; font-weight: 600;
-}
+/* Add-on satellites */
+.addon-satellite { position:absolute; z-index:3; cursor:default; opacity:0; transition:opacity 0.4s; pointer-events:none; }
+.addon-satellite.visible { opacity:1; pointer-events:all; }
+.addon-satellite .node-inner { min-width:120px; padding:9px 13px; border-style:dashed; border-color:var(--addon); background:#F0FAF8; }
+.addon-satellite .node-inner::before { background:var(--addon); }
+.addon-satellite:hover .node-inner { border-color:var(--addon); border-style:dashed; box-shadow:0 0 16px rgba(58,122,122,0.2); transform:scale(1.04); }
+.addon-label-tag { font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--addon); margin-bottom:3px; font-weight:700; }
 
-.node-label { font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; font-weight: 500; }
-.node-title { font-family: 'Cormorant Garamond', serif; font-size: 16px; line-height: 1.2; color: var(--text); }
-.node-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
-.node-sub.triage { color: var(--triage); }
-.node-sub.addon-c { color: var(--addon); }
+.node-label { font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:3px; font-weight:700; }
+.node-title { font-family:'Cormorant Garamond',serif; font-size:16px; line-height:1.2; color:var(--text); }
+.node-sub { font-size:11px; color:var(--muted); margin-top:3px; font-weight:500; }
+.node-sub.triage { color:var(--triage); }
+.node-sub.addon-c { color:var(--addon); }
 
-.goal-node .node-inner { padding: 9px 14px; min-width: 135px; }
-.goal-node .node-title { font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 500; }
+.goal-node .node-inner { padding:9px 14px; min-width:135px; }
+.goal-node .node-title { font-family:'Nunito',sans-serif; font-size:12px; font-weight:600; }
+.entry-node .node-inner { padding:20px 26px; min-width:170px; border-color:var(--brand); background:linear-gradient(135deg,#FFF9F4 0%,var(--surface) 100%); }
+.entry-node .node-title { font-size:19px; }
+.entry-node .node-label { color:var(--brand); }
 
-.entry-node .node-inner { padding: 20px 26px; min-width: 170px; }
-.entry-node .node-title { font-size: 19px; }
-
-/* TOOLTIP */
+/* ── DESKTOP TOOLTIP ── */
 .tooltip {
-  position: fixed; background: #1C1C1F;
-  border: 1px solid var(--border); border-radius: 10px;
-  padding: 13px 16px; max-width: 250px;
-  font-size: 12px; line-height: 1.6; color: #bbb;
-  pointer-events: none; z-index: 200;
-  opacity: 0; transition: opacity 0.12s;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  position:fixed; background:var(--surface); border:1px solid var(--border); border-radius:12px;
+  padding:14px 17px; max-width:260px; font-size:12px; line-height:1.65; color:var(--muted);
+  pointer-events:none; z-index:200; opacity:0; transition:opacity 0.12s;
+  box-shadow:0 8px 32px rgba(180,120,60,0.15); font-family:'Nunito',sans-serif;
 }
-.tooltip.visible { opacity: 1; }
-.tt-title { font-family: 'Cormorant Garamond', serif; font-size: 15px; color: var(--text); margin-bottom: 5px; }
-.tt-tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 7px; }
+.tooltip.visible { opacity:1; }
+.tt-title { font-family:'Cormorant Garamond',serif; font-size:16px; color:var(--text); margin-bottom:5px; }
+.tt-tag { display:inline-block; padding:2px 9px; border-radius:20px; font-size:9px; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; margin-bottom:8px; }
 
-/* BACK */
-.back-btn {
-  position: absolute; bottom: 24px; left: 28px;
-  padding: 7px 16px; border: 1px solid var(--border);
-  border-radius: 20px; font-size: 11px; color: var(--muted);
-  cursor: pointer; transition: all 0.2s; background: transparent;
-  z-index: 10; display: none; font-family: 'Outfit', sans-serif;
-}
-.back-btn:hover { color: var(--text); border-color: var(--muted); }
-.back-btn.visible { display: block; }
-
-/* KEY LEGEND */
-.legend {
-  position: absolute; bottom: 24px; right: 28px;
-  display: flex; gap: 16px; z-index: 10;
-}
-.legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--muted); }
-.legend-line { width: 24px; height: 1px; }
-.legend-line.solid { background: var(--vitality); }
-.legend-line.dashed { border-top: 1px dashed var(--addon); }
-
-/* ANIMATIONS */
-@keyframes drawPath { from { stroke-dashoffset: 2000; } to { stroke-dashoffset: 0; } }
-.anim-path { stroke-dasharray: 2000; stroke-dashoffset: 2000; animation: drawPath 0.55s ease forwards; }
-@keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0);} 50%{box-shadow:0 0 0 8px rgba(201,168,76,0.07);} }
-.pulsing .node-inner { animation: pulse 2.8s infinite; }
-
-
-/* ── TAB SYSTEM ── */
-.tab-nav {
-  display: flex; gap: 2px;
-  background: #111113;
-  border-bottom: 1px solid var(--border);
-  padding: 0 28px;
-  flex-shrink: 0;
-}
-.tab-btn {
-  padding: 10px 18px;
-  font-size: 11px; letter-spacing: 0.08em;
-  text-transform: uppercase; font-weight: 500;
-  color: var(--muted); cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: all 0.2s; background: none;
-  border-top: none; border-left: none; border-right: none;
-  font-family: 'Outfit', sans-serif;
-}
-.tab-btn:hover { color: var(--text); }
-.tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
-
-.tab-panel { display: none; flex: 1; overflow: hidden; flex-direction: column; }
-.tab-panel.active { display: flex; }
-
-/* body needs to not overflow hidden for service tab scroll */
-#tab-services { overflow-y: auto; }
-
-/* ── SERVICE MAP ── */
-.smap-wrap {
-  padding: 28px 40px 24px;
-  display: flex; flex-direction: column;
-  min-height: 100%;
-}
-.smap-top {
-  display: flex; align-items: flex-start;
-  justify-content: space-between; margin-bottom: 18px;
-}
-.smap-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 24px; color: var(--text); margin-bottom: 5px;
-}
-.smap-sub { font-size: 12px; color: var(--muted); max-width: 500px; line-height: 1.6; }
-
-.stage-toggle { display: flex; gap: 6px; }
-.stg-btn {
-  padding: 7px 16px; border-radius: 20px;
-  font-size: 11px; font-weight: 600; letter-spacing: 0.07em;
-  text-transform: uppercase; cursor: pointer;
-  border: 1px solid var(--border); background: transparent;
-  color: var(--muted); transition: all 0.25s;
-  font-family: 'Outfit', sans-serif;
-}
-.stg-btn:hover { color: var(--text); border-color: #555; }
-.stg-btn.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
-
-/* Chart container */
-.chart-container {
-  position: relative;
-  border: 1px solid var(--border); border-radius: 14px;
-  background: #111113; overflow: hidden;
-  height: 480px; flex-shrink: 0;
-  margin-bottom: 20px;
-}
-
-/* Background bands */
-.band {
-  position: absolute; left: 0; right: 0;
-  pointer-events: none;
-}
-.band-core {
-  top: 0; height: 22%;
-  background: linear-gradient(180deg, rgba(107,158,122,0.09) 0%, rgba(107,158,122,0.03) 100%);
-  border-bottom: 1px dashed rgba(107,158,122,0.2);
-}
-.band-secondary {
-  top: 22%; height: 22%;
-  background: linear-gradient(180deg, rgba(91,143,191,0.07) 0%, rgba(91,143,191,0.02) 100%);
-  border-bottom: 1px dashed rgba(91,143,191,0.15);
-}
-.band-migration {
-  top: 44%; height: 20%;
-  background: linear-gradient(180deg, rgba(201,168,76,0.06) 0%, rgba(201,168,76,0.02) 100%);
-  border-bottom: 1px dashed rgba(201,168,76,0.15);
-}
-.band-event {
-  top: 64%; bottom: 0;
-  background: linear-gradient(180deg, rgba(80,80,88,0.05) 0%, transparent 100%);
-}
-
-/* Band right labels */
-.band-rlabel {
-  position: absolute; right: 14px;
-  font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
-  font-weight: 700; pointer-events: none;
-}
-.band-rlabel.core { top: 8px; color: rgba(107,158,122,0.7); }
-.band-rlabel.secondary { top: 25%; color: rgba(91,143,191,0.7); }
-.band-rlabel.migration { top: 47%; color: rgba(201,168,76,0.7); }
-.band-rlabel.event { top: 67%; color: rgba(120,120,128,0.6); }
-
-/* Axis labels */
-.axis-left {
-  position: absolute; left: 0; top: 30px; bottom: 36px; width: 44px;
-  display: flex; flex-direction: column; justify-content: space-between;
-  align-items: center; padding: 0 4px; pointer-events: none;
-}
-.axis-left-label {
-  font-size: 9px; color: var(--muted); letter-spacing: 0.08em;
-  text-transform: uppercase; writing-mode: vertical-rl;
-  transform: rotate(180deg); text-align: center; white-space: nowrap;
-}
-.axis-bottom {
-  position: absolute; bottom: 8px; left: 48px; right: 16px;
-  display: flex; justify-content: space-between;
-  font-size: 9px; color: var(--muted); letter-spacing: 0.07em;
-  text-transform: uppercase; pointer-events: none;
-}
-.axis-title-y {
-  position: absolute; left: 4px; top: 50%;
-  transform: translateY(-50%) rotate(-90deg);
-  font-size: 9px; color: #444; letter-spacing: 0.1em;
-  text-transform: uppercase; white-space: nowrap;
-  pointer-events: none;
-}
-.axis-title-x {
-  position: absolute; bottom: 6px; left: 50%;
-  transform: translateX(-50%);
-  font-size: 9px; color: #444; letter-spacing: 0.1em;
-  text-transform: uppercase; white-space: nowrap;
-  pointer-events: none;
-}
-
-/* Service dots on chart */
-.svc-dot {
+/* ── MOBILE ONBOARDING TOOLTIP ── */
+.mob-tip {
   position: absolute;
-  transform: translate(-50%, -50%);
-  cursor: pointer;
-  transition: left 0.65s cubic-bezier(0.34,1.4,0.64,1),
-              top 0.65s cubic-bezier(0.34,1.4,0.64,1);
-  z-index: 10;
+  z-index: 50;
+  width: 168px;
+  background: rgba(255,252,248,0.97);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--muted);
+  box-shadow: 0 4px 20px rgba(180,120,60,0.18);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  font-family: 'Nunito', sans-serif;
 }
-.svc-dot-pill {
-  padding: 6px 11px; border-radius: 7px;
-  font-size: 11px; font-weight: 500; white-space: nowrap;
-  border: 1px solid; transition: all 0.25s;
-  display: flex; align-items: center; gap: 5px;
+.mob-tip.visible { opacity: 1; }
+/* Horizontal arrow pointing toward the node */
+.mob-tip::before {
+  content: '';
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  border: 6px solid transparent;
 }
-.svc-dot:hover .svc-dot-pill {
-  transform: scale(1.12);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-  z-index: 20;
-}
-.dot-core .svc-dot-pill { background: rgba(107,158,122,0.18); border-color: rgba(107,158,122,0.55); color: #9ACCA9; }
-.dot-secondary .svc-dot-pill { background: rgba(91,143,191,0.15); border-color: rgba(91,143,191,0.45); color: #8BBDE0; }
-.dot-event .svc-dot-pill { background: rgba(80,80,88,0.2); border-color: rgba(80,80,88,0.45); color: #888; }
-.dot-migration .svc-dot-pill { background: rgba(201,168,76,0.15); border-color: rgba(201,168,76,0.5); color: var(--gold); }
-.dot-migration.promoted .svc-dot-pill { background: rgba(91,143,191,0.18); border-color: rgba(91,143,191,0.55); color: #8BBDE0; }
+.mob-tip.tip-left::before  { right: -12px; border-left-color:  var(--border-lt); }
+.mob-tip.tip-right::before { left:  -12px; border-right-color: var(--border-lt); }
+.mob-tip-title { font-family:'Cormorant Garamond',serif; font-size:13px; color:var(--text); margin-bottom:3px; font-weight:600; }
+.mob-tip-tag { font-size:9px; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; margin-bottom:5px; display:block; }
 
-.migrate-badge {
-  font-size: 9px; letter-spacing: 0.06em; font-weight: 700;
-  text-transform: uppercase; padding: 1px 5px; border-radius: 4px;
-  background: rgba(201,168,76,0.2); color: var(--gold);
-  transition: all 0.4s;
+/* ── BACK BUTTON ── */
+.back-btn {
+  position:absolute; bottom:20px; left:20px;
+  padding:8px 18px; border:1.5px solid var(--border); border-radius:20px;
+  font-size:11px; color:var(--muted); cursor:pointer; transition:all 0.2s;
+  background:var(--surface); z-index:10; display:none;
+  font-family:'Nunito',sans-serif; font-weight:600; letter-spacing:0.04em;
+  box-shadow:0 2px 8px rgba(180,120,60,0.08);
 }
-.dot-migration.promoted .migrate-badge {
-  background: rgba(91,143,191,0.2); color: #8BBDE0;
-}
+.back-btn:hover { color:var(--brand); border-color:var(--brand); }
+.back-btn.visible { display:block; }
 
-/* Service detail cards below chart */
-.svc-cards {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
-}
-.svc-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 10px; padding: 14px 16px;
-  transition: all 0.2s;
-}
-.svc-card:hover { border-color: #444; }
-.svc-card-tier {
-  font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
-  font-weight: 700; margin-bottom: 6px;
-}
-.svc-card-tier.core { color: var(--vitality); }
-.svc-card-tier.secondary { color: var(--committed); }
-.svc-card-tier.migration { color: var(--gold); }
-.svc-card-tier.event { color: var(--muted); }
-.svc-card-name { font-family: 'Cormorant Garamond', serif; font-size: 15px; color: var(--text); margin-bottom: 4px; }
-.svc-card-body { font-size: 11px; color: #777; line-height: 1.55; }
+/* ── LEGEND ── */
+.legend { position:absolute; bottom:20px; right:20px; display:flex; gap:16px; z-index:10; }
+.legend-item { display:flex; align-items:center; gap:6px; font-size:10px; color:var(--muted); font-weight:600; letter-spacing:0.04em; }
+.legend-line { width:24px; height:1.5px; }
+.legend-line.solid { background:var(--vitality); }
+.legend-line.dashed { border-top:1.5px dashed var(--addon); }
 
-/* Tooltip for service map */
-.svc-tip {
-  position: fixed; background: #1C1C1F;
-  border: 1px solid var(--border); border-radius: 10px;
-  padding: 12px 15px; max-width: 220px;
-  font-size: 12px; line-height: 1.6; color: #bbb;
-  pointer-events: none; z-index: 300;
-  opacity: 0; transition: opacity 0.12s;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+/* ── ANIMATIONS ── */
+@keyframes drawPath { from{stroke-dashoffset:2000} to{stroke-dashoffset:0} }
+.anim-path { stroke-dasharray:2000; stroke-dashoffset:2000; animation:drawPath 0.5s ease forwards; }
+@keyframes pulse {
+  0%,100% { box-shadow:0 2px 8px rgba(180,120,60,0.06); }
+  50%      { box-shadow:0 0 0 10px rgba(233,155,103,0.1),0 2px 8px rgba(180,120,60,0.06); }
 }
-.svc-tip.visible { opacity: 1; }
-.svc-tip-name { font-family: 'Cormorant Garamond', serif; font-size: 14px; color: var(--text); margin-bottom: 4px; }
-.svc-tip-tag { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 6px; }
+.pulsing .node-inner { animation:pulse 2.8s infinite; }
 
+
+/* ══════════════════════════════════════════
+   MOBILE ≤ 768px
+   ══════════════════════════════════════════ */
+@media (max-width: 768px) {
+  body { overflow:hidden; }
+  .hint { display:none; }
+
+  .canvas { overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; }
+
+  svg.connectors { position:absolute; top:0; left:0; pointer-events:none; }
+
+  .flow-stage {
+    position:relative !important;
+    top:auto !important; bottom:auto !important;
+    left:auto !important; width:auto !important;
+    flex-direction:row; flex-wrap:wrap;
+    justify-content:center; align-items:center;
+    padding:44px 12px 20px; gap:8px;
+    border-bottom:1px solid var(--border-lt);
+    min-height:unset;
+    width: 100% !important;
+  }
+  .flow-stage.hidden { display:none !important; opacity:1; pointer-events:auto; }
+  .flow-stage.dimmed { opacity:0.3; }
+
+  .stage-label { position:absolute; top:12px; left:50%; transform:translateX(-50%); white-space:nowrap; }
+
+  .node-inner      { min-width:118px; padding:10px 14px; }
+  .entry-node .node-inner { min-width:150px; padding:15px 20px; }
+  .goal-node .node-inner  { min-width:108px; padding:8px 11px; }
+  .addon-satellite .node-inner { min-width:100px; padding:8px 11px; }
+
+  .addon-satellite { position:relative !important; left:auto !important; top:auto !important; opacity:0; pointer-events:none; }
+  .addon-satellite.visible { opacity:1; pointer-events:all; }
+
+  .node:hover .node-inner { transform:none; box-shadow:0 2px 8px rgba(180,120,60,0.06); }
+  .node.active .node-inner { transform:scale(1.04); }
+
+  .legend { display:none; }
+
+  .back-btn {
+    bottom:auto; left:50%; top:10px;
+    transform:translateX(-50%);
+    white-space:nowrap; position:fixed; z-index:100;
+  }
+}
 </style>
 </head>
 <body>
 
 <div class="header">
-  <div class="brand">Rise <em>Modern Wellness</em> · 2.0</div>
-  <div class="breadcrumb" id="breadcrumb">
-    <span class="bc-item active" onclick="goToLevel(0)">New Customer</span>
-  </div>
-  <div class="hint" id="main-hint">Click any node · Hover for details</div>
+  <div class="brand">Rise <em>Modern Wellness</em></div>
+  <div class="breadcrumb" id="breadcrumb"><span class="bc-item active">New Customer</span></div>
+  <div class="hint">Click any node · Hover for details</div>
 </div>
 
-<div class="tab-nav">
-  <button class="tab-btn active" id="tbtn-journey" onclick="switchTab('journey')">Customer Journey</button>
-  <button class="tab-btn" id="tbtn-services" onclick="switchTab('services')">Service Map</button>
-</div>
-
-<div class="tab-panel active" id="tab-journey">
 <div class="canvas" id="canvas">
   <svg class="connectors" id="svgc"></svg>
 
-  <!-- STAGE 0: Entry -->
+  <!-- Mobile onboarding tooltip (single instance, repositioned by JS) -->
+  <div class="mob-tip" id="mob-tip">
+    <div class="mob-tip-title" id="mob-tip-title"></div>
+    <span class="mob-tip-tag" id="mob-tip-tag"></span>
+    <div id="mob-tip-body"></div>
+  </div>
+
+  <!-- STAGE 0 -->
   <div class="flow-stage" id="stage-entry" style="left:4%;width:175px;">
     <div class="stage-label" style="left:50%;transform:translateX(-50%)">Entry</div>
-    <div class="node entry-node pulsing" id="node-entry" onclick="clickEntry()">
+    <div class="node entry-node pulsing" id="node-entry" onclick="clickEntry()"
+      data-tt-title="New Customer" data-tt-tag="entry" data-tt-color="#E99B67"
+      data-tt="Start here. Tap to explore the coaching journey and find the right program path.">
       <div class="node-inner">
         <div class="node-label">Start here</div>
         <div class="node-title">New Customer</div>
-        <div class="node-sub">Click to explore</div>
+        <div class="node-sub">Tap to explore</div>
       </div>
     </div>
   </div>
@@ -642,52 +281,42 @@ svg.connectors {
   <!-- STAGE 1: Goals -->
   <div class="flow-stage hidden" id="stage-goals" style="left:19%;width:170px;gap:6px;">
     <div class="stage-label" style="left:50%;transform:translateX(-50%)">Primary Goal</div>
-
     <div class="node goal-node vitality-node" id="goal-rested" onclick="clickGoal('rested')"
       data-tt-title="Wake Up Feeling Rested" data-tt-tag="vitality" data-tt-color="#6B9E7A"
       data-tt="Sleep quality, recovery, circadian rhythm. → Proof Program: Sleep Reset.">
       <div class="node-inner"><div class="node-title">Wake Up Rested</div></div></div>
-
     <div class="node goal-node vitality-node" id="goal-energy" onclick="clickGoal('energy')"
       data-tt-title="More Energy Throughout The Day" data-tt-tag="vitality" data-tt-color="#6B9E7A"
-      data-tt="Fatigue, afternoon crash, caffeine reliance. → Proof Program: Energy Recharge. IV therapy is a strong parallel add-on here.">
+      data-tt="Fatigue, afternoon crash, caffeine reliance. → Proof Program: Energy Recharge. IV therapy is a strong parallel add-on.">
       <div class="node-inner"><div class="node-title">More Energy</div></div></div>
-
     <div class="node goal-node triage-node" id="goal-pain" onclick="clickGoal('pain')"
       data-tt-title="Move With Less Pain" data-tt-tag="triage required" data-tt-color="#D4956A"
       data-tt="Ask: whole-body aches or localized injury? Whole-body → Proof Program (Mobility Reset). Localized → Injury Program.">
       <div class="node-inner"><div class="node-title">Move With Less Pain</div><div class="node-sub triage">Triage required</div></div></div>
-
     <div class="node goal-node vitality-node" id="goal-calm" onclick="clickGoal('calm')"
       data-tt-title="Feel Calmer & Less Overwhelmed" data-tt-tag="vitality" data-tt-color="#6B9E7A"
       data-tt="Stress, anxiety, nervous system dysregulation. → Proof Program: Nervous System Reset.">
       <div class="node-inner"><div class="node-title">Feel Calmer</div></div></div>
-
     <div class="node goal-node vitality-node" id="goal-immune" onclick="clickGoal('immune')"
       data-tt-title="Get Sick Less Often" data-tt-tag="vitality" data-tt-color="#6B9E7A"
       data-tt="Immune resilience, inflammation. → Proof Program: Deep Cleanse. IV therapy (immunity boost) is a strong parallel add-on.">
       <div class="node-inner"><div class="node-title">Get Sick Less Often</div></div></div>
-
     <div class="node goal-node triage-node" id="goal-body" onclick="clickGoal('body')"
       data-tt-title="Feel More Confident In My Body" data-tt-tag="triage required" data-tt-color="#D4956A"
       data-tt="Ask: what does that mean? Physical strength/confidence → Proof Program (Body Reset). Aesthetic/weight loss → Mini Makeover.">
       <div class="node-inner"><div class="node-title">Body Confidence</div><div class="node-sub triage">Triage required</div></div></div>
-
     <div class="node goal-node vitality-node" id="goal-recover" onclick="clickGoal('recover')"
       data-tt-title="Recover Faster From Workouts" data-tt-tag="vitality" data-tt-color="#6B9E7A"
       data-tt="Athletic recovery, muscle soreness, performance. → Proof Program: Athletic Edge.">
       <div class="node-inner"><div class="node-title">Faster Recovery</div></div></div>
-
     <div class="node goal-node vitality-node" id="goal-focus" onclick="clickGoal('focus')"
       data-tt-title="Improve Focus & Mental Clarity" data-tt-tag="vitality" data-tt-color="#6B9E7A"
       data-tt="Cognitive fog, concentration. → Proof Program: Focus Reset. If migraine is the trigger, cryofacial is a parallel same-day add-on.">
       <div class="node-inner"><div class="node-title">Focus & Clarity</div></div></div>
-
     <div class="node goal-node vitality-node" id="goal-mood" onclick="clickGoal('mood')"
       data-tt-title="Feel More Positive & Upbeat" data-tt-tag="vitality" data-tt-color="#6B9E7A"
       data-tt="Mood, motivation, emotional resilience. → Proof Program: Nervous System Reset.">
       <div class="node-inner"><div class="node-title">More Positive</div></div></div>
-
     <div class="node goal-node vitality-node" id="goal-aging" onclick="clickGoal('aging')"
       data-tt-title="Slow Down Signs Of Aging" data-tt-tag="vitality" data-tt-color="#6B9E7A"
       data-tt="Longevity, cellular health, prevention. → Proof Program: Longevity Foundation.">
@@ -697,7 +326,6 @@ svg.connectors {
   <!-- STAGE 2: Programs -->
   <div class="flow-stage hidden" id="stage-programs" style="left:41%;width:185px;gap:14px;">
     <div class="stage-label" style="left:50%;transform:translateX(-50%)">Enrolled Stage</div>
-
     <div class="node vitality-node" id="prog-vitality" onclick="clickProgram('vitality')"
       data-tt-title="Proof Program" data-tt-tag="vitality track" data-tt-color="#6B9E7A"
       data-tt="12 visits · 4–6 weeks · $400. Cryo every visit. Secondary services rotate in 2-visit blocks. Mandatory 14-day check-in after Visit 6.">
@@ -706,7 +334,6 @@ svg.connectors {
         <div class="node-title">Proof Program</div>
         <div class="node-sub">12 visits · $400</div>
       </div></div>
-
     <div class="node aesthetics-node" id="prog-aesthetics" onclick="clickProgram('aesthetics')"
       data-tt-title="Mini Makeover" data-tt-tag="aesthetics track" data-tt-color="#C47B84"
       data-tt="13 weeks · $1,300+. Proof Program rotation + slimming every 3rd visit. Complete solution sold upfront. Avg ~10 lbs per block.">
@@ -715,7 +342,6 @@ svg.connectors {
         <div class="node-title">Mini Makeover</div>
         <div class="node-sub">13 weeks · $1,300+</div>
       </div></div>
-
     <div class="node injury-node" id="prog-injury" onclick="clickProgram('injury')"
       data-tt-title="Injury Program" data-tt-tag="injury track" data-tt-color="#9B75B8"
       data-tt="12 visits in 2 blocks. First 6: local cryo + e-stim + infrared on injury site. Evaluate at visit 6. Second 6 mirrors Proof Program if ready.">
@@ -724,21 +350,27 @@ svg.connectors {
         <div class="node-title">Injury Program</div>
         <div class="node-sub">12 visits · 4–6 weeks</div>
       </div></div>
-
     <div class="node single-node" id="prog-single"
-      data-tt-title="Single Service Visit" data-tt-tag="visitor — declined program" data-tt-color="#4A4A52"
-      data-tt="Client said no to the program. Single-session pricing only. No package offered. Log as Visitor in CRM. Trigger follow-up sequence. No fallback SKU.">
-      <div class="node-inner" style="opacity:0.7;">
-        <div class="node-label" style="color:var(--muted)">Declined</div>
-        <div class="node-title" style="font-size:14px;color:#888">Single Service</div>
+      data-tt-title="Single Service Visit" data-tt-tag="visitor — declined program" data-tt-color="#999"
+      data-tt="Client said no to the program. Single-session pricing only. Log as Visitor in CRM. Trigger follow-up sequence.">
+      <div class="node-inner" style="opacity:0.6;">
+        <div class="node-label">Declined</div>
+        <div class="node-title" style="font-size:14px;color:var(--muted)">Single Service</div>
         <div class="node-sub">No escalation</div>
       </div></div>
+    <div class="addon-satellite" id="sat-iv-enrolled"
+      data-tt-title="IV Therapy — Parallel Add-On" data-tt-tag="add-on · enrolled stage" data-tt-color="#3A7A7A"
+      data-tt="Not a replacement for the program. A same-day complement for energy/immunity goals. 'A lot of our clients add an occasional IV — it accelerates what the program does.' No hard close.">
+      <div class="node-inner"><div class="addon-label-tag">Add-On</div><div class="node-title" style="font-size:13px;">IV Therapy</div><div class="node-sub addon-c">Energy · Immunity</div></div></div>
+    <div class="addon-satellite" id="sat-cryo-facial"
+      data-tt-title="Cryofacial — Parallel Add-On" data-tt-tag="add-on · same-day" data-tt-color="#3A7A7A"
+      data-tt="Triggered if client mentions migraine or facial tension. Same-day relief while program addresses root cause. Reactive only — never proactively pitched.">
+      <div class="node-inner"><div class="addon-label-tag">Add-On</div><div class="node-title" style="font-size:13px;">Cryofacial</div><div class="node-sub addon-c">Migraine · Tension</div></div></div>
   </div>
 
   <!-- STAGE 3: Escalation -->
   <div class="flow-stage hidden" id="stage-escalation" style="left:62%;width:185px;gap:14px;">
     <div class="stage-label" style="left:50%;transform:translateX(-50%)">Progress Review</div>
-
     <div class="node committed-node" id="esc-vitality" onclick="clickEscalation('vitality')"
       data-tt-title="Ultimate Year of Vitality" data-tt-tag="committed stage" data-tt-color="#5B8FBF"
       data-tt="104 visits · 12 months · $3,328 ($32/visit). Sold at 14-day Progress Review. Pay in full or quarterly. Add-on packages unlock here.">
@@ -747,8 +379,7 @@ svg.connectors {
         <div class="node-title">Year of Vitality</div>
         <div class="node-sub">104 visits · $3,328</div>
       </div></div>
-
-    <div class="node aesthetics-node triage-node" id="esc-aesthetics" onclick="clickEscalation('aesthetics')"
+    <div class="node triage-node" id="esc-aesthetics" onclick="clickEscalation('aesthetics')"
       data-tt-title="Mini Makeover Completion" data-tt-tag="triage at week 13" data-tt-color="#D4956A"
       data-tt="Week 13 triage: another Mini Makeover round if still working toward aesthetic goal, OR convert to Year of Vitality if identity shift has occurred. Ask: what's your priority now?">
       <div class="node-inner">
@@ -758,10 +389,9 @@ svg.connectors {
       </div></div>
   </div>
 
-  <!-- STAGE 4: Committed outcomes -->
+  <!-- STAGE 4: Committed -->
   <div class="flow-stage hidden" id="stage-committed" style="left:81%;width:185px;gap:14px;">
     <div class="stage-label" style="left:50%;transform:translateX(-50%)">Committed Stage</div>
-
     <div class="node committed-node" id="out-yov"
       data-tt-title="Year of Vitality — Active" data-tt-tag="committed" data-tt-color="#5B8FBF"
       data-tt="Client is now on the Year of Vitality. 104 visits, quarterly reviews, Live Well points accumulate. Add-on packages unlock. IV/IM cadence becomes proactive at this stage.">
@@ -770,7 +400,6 @@ svg.connectors {
         <div class="node-title">Year of Vitality</div>
         <div class="node-sub">Add-ons unlock · Points active</div>
       </div></div>
-
     <div class="node aesthetics-node" id="out-mm2"
       data-tt-title="Mini Makeover — Round 2+" data-tt-tag="aesthetics resell" data-tt-color="#C47B84"
       data-tt="Additional 13-week block. Goal: next 10 lbs. Same structure, resold at completion. Client may convert to Year of Vitality after achieving aesthetic goal.">
@@ -779,7 +408,6 @@ svg.connectors {
         <div class="node-title">Next Round</div>
         <div class="node-sub">+13 weeks · $1,300+</div>
       </div></div>
-
     <div class="node committed-node" id="out-convert"
       data-tt-title="Convert to Year of Vitality" data-tt-tag="aesthetics → committed" data-tt-color="#5B8FBF"
       data-tt="Aesthetics client achieved their goal and is ready to shift to maintenance identity. Transition to Year of Vitality at week 13 triage conversation.">
@@ -788,632 +416,446 @@ svg.connectors {
         <div class="node-title">Year of Vitality</div>
         <div class="node-sub">From aesthetics track</div>
       </div></div>
+    <div class="addon-satellite" id="sat-iv-committed"
+      data-tt-title="IV Package — Committed Stage" data-tt-tag="add-on · committed · points" data-tt-color="#3A7A7A"
+      data-tt="Regular IV cadence becomes proactive for Year of Vitality clients. Points worth double on package. 'You have X points — worth double toward an IV package.' Never say discount.">
+      <div class="node-inner"><div class="addon-label-tag">Add-On · Points ×2</div><div class="node-title" style="font-size:13px;">IV Package</div><div class="node-sub addon-c">Proactive at this stage</div></div></div>
+    <div class="addon-satellite" id="sat-slimming"
+      data-tt-title="Slimming + Sculpting Package" data-tt-tag="add-on · committed only" data-tt-color="#3A7A7A"
+      data-tt="Exclusive to Year of Vitality clients. Layered onto existing visit cadence. Sold via points mechanism. Never available to visitor or enrolled-only clients.">
+      <div class="node-inner"><div class="addon-label-tag">Add-On · Exclusive</div><div class="node-title" style="font-size:13px;">Slimming / Sculpting</div><div class="node-sub addon-c">YoV clients only</div></div></div>
   </div>
 
-  <!-- ADD-ON SATELLITES — absolutely positioned, shown contextually -->
-  <!-- These get repositioned dynamically via JS -->
-  <div class="addon-satellite" id="sat-iv-enrolled"
-    data-tt-title="IV Therapy — Parallel Add-On" data-tt-tag="add-on · enrolled stage" data-tt-color="#3A7A7A"
-    data-tt="Not a replacement for the program. A same-day complement for energy/immunity goals. One sentence: 'A lot of our [goal] clients add an occasional IV — it accelerates what the program does.' No hard close.">
-    <div class="node-inner">
-      <div class="addon-label-tag">Add-On</div>
-      <div class="node-title" style="font-size:13px;">IV Therapy</div>
-      <div class="node-sub addon-c">Energy · Immunity</div>
-    </div></div>
-
-  <div class="addon-satellite" id="sat-cryo-facial"
-    data-tt-title="Cryofacial — Parallel Add-On" data-tt-tag="add-on · same-day" data-tt-color="#3A7A7A"
-    data-tt="Triggered if client mentions migraine or facial tension. Same-day relief while program addresses root cause. One sentence max. Reactive only — never proactively pitched.">
-    <div class="node-inner">
-      <div class="addon-label-tag">Add-On</div>
-      <div class="node-title" style="font-size:13px;">Cryofacial</div>
-      <div class="node-sub addon-c">Migraine · Tension</div>
-    </div></div>
-
-  <div class="addon-satellite" id="sat-iv-committed"
-    data-tt-title="IV Package — Committed Stage" data-tt-tag="add-on · committed · points" data-tt-color="#3A7A7A"
-    data-tt="Regular IV cadence becomes proactive for Year of Vitality clients. Points worth double on package. 'You have X points — worth double toward an IV package.' Never say discount.">
-    <div class="node-inner">
-      <div class="addon-label-tag">Add-On · Points ×2</div>
-      <div class="node-title" style="font-size:13px;">IV Package</div>
-      <div class="node-sub addon-c">Proactive at this stage</div>
-    </div></div>
-
-  <div class="addon-satellite" id="sat-slimming"
-    data-tt-title="Slimming + Sculpting Package" data-tt-tag="add-on · committed only" data-tt-color="#3A7A7A"
-    data-tt="Exclusive to Year of Vitality clients. Layered onto existing visit cadence. Sold via points mechanism. Never available to visitor or enrolled-only clients.">
-    <div class="node-inner">
-      <div class="addon-label-tag">Add-On · Exclusive</div>
-      <div class="node-title" style="font-size:13px;">Slimming / Sculpting</div>
-      <div class="node-sub addon-c">YoV clients only</div>
-    </div></div>
-
   <button class="back-btn" id="back-btn" onclick="resetAll()">← Reset</button>
-
   <div class="legend">
     <div class="legend-item"><div class="legend-line solid"></div>Primary path</div>
     <div class="legend-item"><div class="legend-line dashed"></div>Parallel add-on</div>
   </div>
 </div>
-</div>
-
-
-<div class="tab-panel" id="tab-services">
-  <div class="smap-wrap">
-
-    <div class="smap-top">
-      <div>
-        <div class="smap-title">Service Map</div>
-        <div class="smap-sub">Every service plotted by how often it can be done and whether a healthy person would do it indefinitely. Services above the dashed line belong in structured programs. Hover any dot for details.</div>
-      </div>
-      <div>
-        <div style="font-size:10px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;text-align:right;">Customer Stage</div>
-        <div class="stage-toggle">
-          <button class="stg-btn active" onclick="setStage('visitor')">Visitor</button>
-          <button class="stg-btn" onclick="setStage('enrolled')">Enrolled</button>
-          <button class="stg-btn" onclick="setStage('committed')">Committed</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Chart -->
-    <div class="chart-container" id="chart">
-      <!-- Background bands -->
-      <div class="band band-core"></div>
-      <div class="band band-secondary"></div>
-      <div class="band band-migration"></div>
-      <div class="band band-event"></div>
-
-      <!-- Band labels -->
-      <div class="band-rlabel core">Core — Every Visit</div>
-      <div class="band-rlabel secondary">Secondary — Regular Rotation</div>
-      <div class="band-rlabel migration">Migrates with Stage →</div>
-      <div class="band-rlabel event">Event — When Needed</div>
-
-      <!-- Axis -->
-      <div class="axis-title-y">← Identity-driven &nbsp;&nbsp;&nbsp; Perpetuity motivation &nbsp;&nbsp;&nbsp; Event-driven →</div>
-      <div class="axis-title-x">← Low frequency &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Session frequency potential &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; High frequency →</div>
-
-      <!-- Service dots — positioned via JS -->
-      <div class="svc-dot dot-core" id="dot-cryo" data-svc="cryo">
-        <div class="svc-dot-pill">Whole Body Cryo</div>
-      </div>
-      <div class="svc-dot dot-secondary" id="dot-sauna" data-svc="sauna">
-        <div class="svc-dot-pill">Infrared Sauna</div>
-      </div>
-      <div class="svc-dot dot-secondary" id="dot-pemf" data-svc="pemf">
-        <div class="svc-dot-pill">PEMF Therapy</div>
-      </div>
-      <div class="svc-dot dot-secondary" id="dot-comp" data-svc="comp">
-        <div class="svc-dot-pill">Compression + Red Light</div>
-      </div>
-      <div class="svc-dot dot-migration" id="dot-im" data-svc="im">
-        <div class="svc-dot-pill">Injections <span class="migrate-badge">Migrates</span></div>
-      </div>
-      <div class="svc-dot dot-migration" id="dot-iv" data-svc="iv">
-        <div class="svc-dot-pill">IV Therapy <span class="migrate-badge">Migrates</span></div>
-      </div>
-      <div class="svc-dot dot-event" id="dot-slimming" data-svc="slimming">
-        <div class="svc-dot-pill">Body Slimming</div>
-      </div>
-      <div class="svc-dot dot-event" id="dot-sculpt" data-svc="sculpt">
-        <div class="svc-dot-pill">Body Sculpting</div>
-      </div>
-      <div class="svc-dot dot-event" id="dot-cryo-facial" data-svc="cryofacial">
-        <div class="svc-dot-pill">Cryofacial</div>
-      </div>
-      <div class="svc-dot dot-event" id="dot-salt" data-svc="salt">
-        <div class="svc-dot-pill">Dry Salt Therapy</div>
-      </div>
-      <div class="svc-dot dot-event" id="dot-sound" data-svc="sound">
-        <div class="svc-dot-pill">Sound Therapy</div>
-      </div>
-      <div class="svc-dot dot-event" id="dot-estim" data-svc="estim">
-        <div class="svc-dot-pill">E-Stim</div>
-      </div>
-      <div class="svc-dot dot-event" id="dot-localcryo" data-svc="localcryo">
-        <div class="svc-dot-pill">Local Cryo</div>
-      </div>
-    </div>
-
-    <!-- Service cards -->
-    <div class="svc-cards">
-      <div class="svc-card">
-        <div class="svc-card-tier core">Core — Every Visit</div>
-        <div class="svc-card-name">Whole Body Cryotherapy</div>
-        <div class="svc-card-body">Fast onset, fast decay (24–72 hrs). Maximum perpetuity benefit. Anchors every program visit without exception.</div>
-      </div>
-      <div class="svc-card">
-        <div class="svc-card-tier secondary">Secondary — Rotation</div>
-        <div class="svc-card-name">Infrared Sauna · PEMF · Compression + Red Light</div>
-        <div class="svc-card-body">Slower onset, longer decay (3–7+ days). Rotate in 2-visit blocks. High perpetuity benefit at appropriate frequency.</div>
-      </div>
-      <div class="svc-card">
-        <div class="svc-card-tier migration">Migrates with Stage</div>
-        <div class="svc-card-name">IV Therapy · Injections</div>
-        <div class="svc-card-body">Event-driven for Visitor + Enrolled. Becomes proactive secondary behavior for Committed clients. Points × 2 at this stage.</div>
-      </div>
-      <div class="svc-card">
-        <div class="svc-card-tier event">Event — Reactive Only</div>
-        <div class="svc-card-name">Cryofacial · Dry Salt · Sound · E-Stim · Local Cryo · Slimming · Sculpting</div>
-        <div class="svc-card-body">Triggered by a specific complaint or goal. Never proactively scheduled in core programs. Slimming + Sculpting: Committed only.</div>
-      </div>
-    </div>
-
-  </div>
-</div>
-<div class="svc-tip" id="svc-tip"></div>
-
 
 <div class="tooltip" id="tooltip"></div>
 
 <script>
-
-const state = { level: 0, goal: null, program: null };
-const svg = document.getElementById('svgc');
+const IS_MOBILE = () => window.innerWidth <= 768;
+const state = { level:0, goal:null, program:null };
+const svg   = document.getElementById('svgc');
 const canvas = document.getElementById('canvas');
 
-// ── TOOLTIP ─────────────────────────────────────────────
+// ── STORED MOBILE PATH SEGMENTS ─────────────────────────
+// Each segment: { x1,y1,x2,y2,color,opacity }
+let mobilePathHistory = [];
+
+// ── DESKTOP TOOLTIP ──────────────────────────────────────
 const tip = document.getElementById('tooltip');
 document.querySelectorAll('[data-tt-title]').forEach(el => {
-  el.addEventListener('mouseenter', e => showTip(e, el));
-  el.addEventListener('mousemove', e => moveTip(e));
-  el.addEventListener('mouseleave', () => tip.classList.remove('visible'));
+  el.addEventListener('mouseenter', e => { if (!IS_MOBILE()) showTip(e,el); });
+  el.addEventListener('mousemove',  e => { if (!IS_MOBILE()) moveTip(e); });
+  el.addEventListener('mouseleave', () => { if (!IS_MOBILE()) tip.classList.remove('visible'); });
+  el.addEventListener('click', () => { if (IS_MOBILE()) showMobTip(el); });
 });
-function showTip(e, el) {
-  const color = el.dataset.ttColor || '#888';
-  tip.innerHTML = `<div class="tt-title">${el.dataset.ttTitle}</div>
-    <div class="tt-tag" style="background:${color}22;color:${color}">${el.dataset.ttTag||''}</div>
-    <div>${el.dataset.tt||''}</div>`;
-  tip.classList.add('visible');
-  moveTip(e);
+function showTip(e,el) {
+  const c = el.dataset.ttColor||'#888';
+  tip.innerHTML=`<div class="tt-title">${el.dataset.ttTitle}</div><div class="tt-tag" style="background:${c}22;color:${c}">${el.dataset.ttTag||''}</div><div>${el.dataset.tt||''}</div>`;
+  tip.classList.add('visible'); moveTip(e);
 }
 function moveTip(e) {
-  let x = e.clientX + 14, y = e.clientY - 12;
-  if (x + 260 > window.innerWidth) x = e.clientX - 268;
-  tip.style.cssText = `left:${x}px;top:${y}px`;
+  let x=e.clientX+14,y=e.clientY-12;
+  if(x+268>window.innerWidth) x=e.clientX-272;
+  tip.style.cssText=`left:${x}px;top:${y}px`;
+}
+
+// ── MOBILE ONBOARDING TOOLTIP ────────────────────────────
+let mobTipTimer = null;
+const mobTip = document.getElementById('mob-tip');
+
+function showMobTip(el) {
+  if (!IS_MOBILE()) return;
+  const color = el.dataset.ttColor || '#888';
+  document.getElementById('mob-tip-title').textContent = el.dataset.ttTitle || '';
+  const tagEl = document.getElementById('mob-tip-tag');
+  tagEl.textContent = el.dataset.ttTag || '';
+  tagEl.style.color = color;
+  document.getElementById('mob-tip-body').textContent = el.dataset.tt || '';
+
+  const elRect     = el.getBoundingClientRect();
+  const canvasRect = canvas.getBoundingClientRect();
+  const scrollTop  = canvas.scrollTop;
+  const elTop      = elRect.top  - canvasRect.top  + scrollTop;
+  const elLeft     = elRect.left - canvasRect.left;
+  const elCenterY  = elTop + elRect.height / 2;
+  const elMidX     = elLeft + elRect.width / 2;
+  const tipW = 168, tipH = 110, gap = 10;
+  const canvasW = canvasRect.width;
+
+  let tipLeft, arrowClass;
+  if (elMidX > canvasW / 2) {
+    tipLeft = Math.max(6, elLeft - tipW - gap);
+    arrowClass = 'tip-left';
+  } else {
+    tipLeft = elLeft + elRect.width + gap;
+    if (tipLeft + tipW > canvasW - 6) tipLeft = canvasW - tipW - 6;
+    arrowClass = 'tip-right';
+  }
+  let tipTop = Math.max(scrollTop + 6, elCenterY - tipH / 2);
+
+  mobTip.className = `mob-tip ${arrowClass}`;
+  mobTip.style.left = tipLeft + 'px';
+  mobTip.style.top  = tipTop  + 'px';
+  mobTip.classList.add('visible');
+  clearTimeout(mobTipTimer);
+  mobTipTimer = setTimeout(() => mobTip.classList.remove('visible'), 3500);
 }
 
 // ── SVG HELPERS ──────────────────────────────────────────
-function clr() { svg.innerHTML = ''; }
-
-function cr(el) {
-  const r = el.getBoundingClientRect(), cr2 = canvas.getBoundingClientRect();
-  return { x: r.left-cr2.left+r.width/2, y: r.top-cr2.top+r.height/2,
-           rx: r.right-cr2.left, lx: r.left-cr2.left,
-           top: r.top-cr2.top, bot: r.bottom-cr2.top };
+function syncSvgSize() {
+  if (IS_MOBILE()) {
+    svg.setAttribute('width',  canvas.scrollWidth);
+    svg.setAttribute('height', canvas.scrollHeight);
+    svg.style.width  = canvas.scrollWidth  + 'px';
+    svg.style.height = canvas.scrollHeight + 'px';
+  } else {
+    svg.removeAttribute('width'); svg.removeAttribute('height');
+    svg.style.width=''; svg.style.height='';
+  }
 }
 
-function curve(x1,y1,x2,y2,color,width,delay,dashed) {
-  const mx = (x1+x2)/2;
-  const p = document.createElementNS('http://www.w3.org/2000/svg','path');
-  p.setAttribute('d',`M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`);
+function clr() { svg.innerHTML=''; }
+
+function cr(el) {
+  const r=el.getBoundingClientRect(), cr2=canvas.getBoundingClientRect();
+  const st = IS_MOBILE() ? canvas.scrollTop  : 0;
+  const sl = IS_MOBILE() ? canvas.scrollLeft : 0;
+  return {
+    x:  r.left-cr2.left+r.width/2+sl,
+    y:  r.top -cr2.top +r.height/2+st,
+    rx: r.right -cr2.left+sl,
+    lx: r.left  -cr2.left+sl,
+    top:r.top   -cr2.top +st,
+    bot:r.bottom-cr2.top +st,
+  };
+}
+
+function drawPath(x1,y1,x2,y2,color,width,delay,dashed,opacity) {
+  const mx=(x1+x2)/2, my=(y1+y2)/2;
+  const d = IS_MOBILE()
+    ? `M${x1},${y1} C${x1},${my} ${x2},${my} ${x2},${y2}`
+    : `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`;
+  const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+  p.setAttribute('d',d);
   p.setAttribute('stroke',color);
   p.setAttribute('stroke-width',width||1.5);
   p.setAttribute('fill','none');
-  p.setAttribute('opacity', dashed ? '0.45' : '0.55');
-  if (dashed) p.setAttribute('stroke-dasharray','5,4');
+  p.setAttribute('opacity', opacity !== undefined ? opacity : (dashed?0.45:0.6));
+  if(dashed) p.setAttribute('stroke-dasharray','5,4');
   p.classList.add('anim-path');
-  p.style.animationDelay = (delay||0)+'s';
+  p.style.animationDelay=(delay||0)+'s';
   svg.appendChild(p);
 }
 
-// ── SATELLITE POSITIONING ────────────────────────────────
+// ── MOBILE: redraw all stored path history ───────────────
+function redrawMobilePaths() {
+  syncSvgSize();
+  clr();
+  mobilePathHistory.forEach(seg => {
+    drawPath(seg.x1,seg.y1,seg.x2,seg.y2,seg.color,seg.width,0,false,seg.opacity);
+  });
+}
+
+// ── MOBILE LEVEL 0→1: fan lines from entry to ALL goals ──
+function drawMobileFan(entryEl) {
+  syncSvgSize();
+  const goals = Array.from(document.querySelectorAll('#stage-goals .node:not(.addon-satellite)'));
+  const ec = cr(entryEl);
+  const newSegs = [];
+  goals.forEach((g,i) => {
+    const gc  = cr(g);
+    const col = g.classList.contains('triage-node') ? '#D4956A' : '#6B9E7A';
+    drawPath(ec.x, ec.bot, gc.x, gc.top, col, 1.2, i*0.04, false, 0.35);
+    newSegs.push({ x1:ec.x, y1:ec.bot, x2:gc.x, y2:gc.top, color:col, width:1.2, opacity:0.35 });
+  });
+  mobilePathHistory = newSegs;
+}
+
+// ── MOBILE: ghost existing + fan-draw to ALL target nodes ─
+// targetEls: array of visible DOM elements in the next stage
+// activeEl:  the one the user actually selected (bold line)
+// ghostColor: color for the fan lines to non-selected targets
+function drawMobileFanFrom(fromEl, targetEls, activeEl, ghostColor) {
+  // Ghost all existing history segments
+  mobilePathHistory = mobilePathHistory.map(s => ({ ...s, opacity: s.opacity * 0.4 }));
+
+  const f = cr(fromEl);
+  const newSegs = [];
+
+  targetEls.forEach((toEl, i) => {
+    const t   = cr(toEl);
+    const isActive = toEl === activeEl;
+    const col = ghostColor;
+    const w   = isActive ? 2.2 : 1.2;
+    const op  = isActive ? 0.7 : 0.3;
+    drawPath(f.x, f.bot, t.x, t.top, col, w, i * 0.04, false, op);
+    newSegs.push({ x1:f.x, y1:f.bot, x2:t.x, y2:t.top, color:col, width:w, opacity:op });
+  });
+
+  mobilePathHistory = [...mobilePathHistory, ...newSegs];
+  // Re-sync SVG size in case canvas grew
+  syncSvgSize();
+}
+
+// ── SATELLITE ────────────────────────────────────────────
 function placeSat(satId, anchorEl, offsetY) {
-  const sat = document.getElementById(satId);
-  const ar = anchorEl.getBoundingClientRect();
-  const cr2 = canvas.getBoundingClientRect();
-  const ax = ar.left - cr2.left + ar.width/2;
-  const ay = ar.top - cr2.top + ar.height/2 + offsetY;
-  sat.style.left = (ax - 70) + 'px';
-  sat.style.top = (ay - 28) + 'px';
+  const sat=document.getElementById(satId);
+  if (IS_MOBILE()) { sat.classList.add('visible'); return; }
+  const ar=anchorEl.getBoundingClientRect(), cr2=canvas.getBoundingClientRect();
+  sat.style.left=(ar.left-cr2.left+ar.width/2-70)+'px';
+  sat.style.top =(ar.top -cr2.top +ar.height/2+offsetY-28)+'px';
   sat.classList.add('visible');
 }
-
-function hideSat(satId) {
-  const s = document.getElementById(satId);
-  s.classList.remove('visible');
-}
-
-function drawDashedToSat(anchorEl, satId, color) {
-  const sat = document.getElementById(satId);
-  if (!sat.classList.contains('visible')) return;
-  const a = cr(anchorEl), s = cr(sat);
-  // draw from anchor top/bottom to satellite
-  const ay = s.y < a.y ? a.top : a.bot;
-  curve(a.x, ay, s.x, s.y < a.y ? s.bot : s.top, color, 1, 0.3, true);
-}
-
-// ── LEVEL 0→1: Entry click ───────────────────────────────
-function clickEntry() {
-  if (state.level > 0) return;
-  state.level = 1;
-  document.getElementById('node-entry').classList.add('active');
-  document.getElementById('node-entry').classList.remove('pulsing');
-  show('stage-goals');
-  document.getElementById('back-btn').classList.add('visible');
-  updateBc();
-  setTimeout(() => {
-    clr();
-    const ec = cr(document.getElementById('node-entry'));
-    document.querySelectorAll('#stage-goals .node').forEach((g,i) => {
-      const gc = cr(g);
-      const col = g.classList.contains('triage-node') ? '#D4956A' : '#6B9E7A';
-      curve(ec.rx, ec.y, gc.lx, gc.y, col, 1.1, i*0.035);
-    });
-  }, 80);
-}
-
-// ── LEVEL 1→2: Goal click ────────────────────────────────
-// Goals with IV add-on
-const ivGoals = ['energy','immune'];
-// Goals with cryo facial add-on
-const cryoGoals = ['focus'];
-// Triage goals
-const triageGoals = ['pain','body'];
-
-function clickGoal(gid) {
-  if (state.level !== 1) return;
-  state.level = 2; state.goal = gid;
-
-  document.querySelectorAll('#stage-goals .node').forEach(n => {
-    if (n.id !== 'goal-'+gid) { n.style.opacity='0.2'; n.style.pointerEvents='none'; }
-    else n.classList.add('active');
-  });
-
-  // Show programs — conditionally
-  show('stage-programs');
-  const showAes = gid === 'body';
-  const showInj = gid === 'pain';
-  if (!triageGoals.includes(gid)) {
-    hide('prog-aesthetics'); hide('prog-injury');
-  } else if (showAes) {
-    hide('prog-injury');
-  } else if (showInj) {
-    hide('prog-aesthetics');
-  }
-  // Always show single service (declined path)
-  show('prog-single');
-
-  updateBc();
-  setTimeout(() => drawGoalLevel(gid), 80);
-}
-
-function drawGoalLevel(gid) {
-  clr();
-  const ec = cr(document.getElementById('node-entry'));
-  const gc = cr(document.getElementById('goal-'+gid));
-  // entry → goal
-  curve(ec.rx, ec.y, gc.lx, gc.y, '#C9A84C', 2, 0);
-
-  // goal → programs
-  ['prog-vitality','prog-aesthetics','prog-injury','prog-single'].forEach((pid,i) => {
-    const el = document.getElementById(pid);
-    if (!el || el.style.display==='none') return;
-    const pc = cr(el);
-    const col = pid==='prog-aesthetics'?'#C47B84': pid==='prog-injury'?'#9B75B8': pid==='prog-single'?'#3A3A44':'#6B9E7A';
-    const w = pid==='prog-single' ? 1 : 1.8;
-    curve(gc.rx, gc.y, pc.lx, pc.y, col, w, i*0.07);
-  });
-
-  // Parallel add-ons
-  const progEl = document.getElementById('prog-vitality');
-  if (ivGoals.includes(gid)) {
-    placeSat('sat-iv-enrolled', progEl, -85);
-    setTimeout(() => drawDashedToSat(progEl, 'sat-iv-enrolled', '#3A7A7A'), 400);
-  }
-  if (cryoGoals.includes(gid)) {
-    placeSat('sat-cryo-facial', progEl, -85);
-    setTimeout(() => drawDashedToSat(progEl, 'sat-cryo-facial', '#3A7A7A'), 400);
-  }
-}
-
-// ── LEVEL 2→3: Program click ─────────────────────────────
-function clickProgram(pid) {
-  if (state.level !== 2) return;
-  state.level = 3; state.program = pid;
-
-  document.querySelectorAll('#stage-programs .node').forEach(n => {
-    const nid = n.id.replace('prog-','');
-    if (nid !== pid) { n.style.opacity='0.2'; n.style.pointerEvents='none'; }
-    else n.classList.add('active');
-  });
-
-  hideSat('sat-iv-enrolled'); hideSat('sat-cryo-facial');
-  show('stage-escalation');
-  if (pid === 'aesthetics') { hide('esc-vitality'); }
-  else { hide('esc-aesthetics'); }
-
-  updateBc();
-  setTimeout(() => drawProgramLevel(pid), 80);
-}
-
-function drawProgramLevel(pid) {
-  clr();
-  const ec = cr(document.getElementById('node-entry'));
-  const gc = cr(document.getElementById('goal-'+state.goal));
-  const pc = cr(document.getElementById('prog-'+pid));
-
-  curve(ec.rx, ec.y, gc.lx, gc.y, '#C9A84C44', 1.2, 0);
-  const pcol = pid==='aesthetics'?'#C47B84':pid==='injury'?'#9B75B8':'#6B9E7A';
-  curve(gc.rx, gc.y, pc.lx, pc.y, pcol+'55', 1.2, 0);
-
-  const escId = pid==='aesthetics'?'esc-aesthetics':'esc-vitality';
-  const escEl = document.getElementById(escId);
-  const ec2 = cr(escEl);
-  const ecol = pid==='aesthetics'?'#D4956A':'#5B8FBF';
-  curve(pc.rx, pc.y, ec2.lx, ec2.y, ecol, 2, 0.1);
-}
-
-// ── LEVEL 3→4: Escalation click ──────────────────────────
-function clickEscalation(eid) {
-  if (state.level !== 3) return;
-  state.level = 4;
-
-  document.querySelectorAll('#stage-escalation .node').forEach(n => {
-    const nid = n.id.replace('esc-','');
-    if (nid !== eid) { n.style.opacity='0.2'; n.style.pointerEvents='none'; }
-    else n.classList.add('active');
-  });
-
-  show('stage-committed');
-
-  if (eid === 'vitality') {
-    hide('out-mm2'); hide('out-convert');
-  } else {
-    // aesthetics triage — show both mini makeover and conversion options
-    hide('out-yov');
-  }
-
-  updateBc();
-  setTimeout(() => drawEscalationLevel(eid), 80);
-}
-
-function drawEscalationLevel(eid) {
-  clr();
-  const ec = cr(document.getElementById('node-entry'));
-  const gc = cr(document.getElementById('goal-'+state.goal));
-  const pc = cr(document.getElementById('prog-'+state.program));
-  const escEl = document.getElementById('esc-'+eid);
-  const esc = cr(escEl);
-
-  // Ghost previous path
-  curve(ec.rx, ec.y, gc.lx, gc.y, '#C9A84C33', 1, 0);
-  const pcol = state.program==='aesthetics'?'#C47B84':state.program==='injury'?'#9B75B8':'#6B9E7A';
-  curve(gc.rx, gc.y, pc.lx, pc.y, pcol+'33', 1, 0);
-  const ecol = eid==='aesthetics'?'#D4956A':'#5B8FBF';
-  curve(pc.rx, pc.y, esc.lx, esc.y, ecol+'55', 1, 0);
-
-  // Escalation → outcomes
-  const outcomes = eid === 'vitality' ? ['out-yov'] : ['out-mm2','out-convert'];
-  outcomes.forEach((oid,i) => {
-    const el = document.getElementById(oid);
-    if (!el || el.style.display==='none') return;
-    const oc = cr(el);
-    const col = oid==='out-yov'?'#5B8FBF': oid==='out-mm2'?'#C47B84':'#5B8FBF';
-    curve(esc.rx, esc.y, oc.lx, oc.y, col, 2, i*0.1);
-  });
-
-  // Add-on satellites for committed stage
-  if (eid === 'vitality') {
-    const yovEl = document.getElementById('out-yov');
-    placeSat('sat-iv-committed', yovEl, -85);
-    placeSat('sat-slimming', yovEl, 85);
-    setTimeout(() => {
-      drawDashedToSat(yovEl, 'sat-iv-committed', '#3A7A7A');
-      drawDashedToSat(yovEl, 'sat-slimming', '#3A7A7A');
-    }, 400);
-  }
-}
-
-// ── SHOW/HIDE HELPERS ────────────────────────────────────
-function show(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.classList.remove('hidden','dimmed');
-  el.style.display = '';
-  el.style.opacity = '';
-  el.style.pointerEvents = '';
-}
-function hide(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.style.display = 'none';
+function hideSat(id) { document.getElementById(id).classList.remove('visible'); }
+function drawDashedToSat(anchorEl,satId,color) {
+  if(IS_MOBILE()) return;
+  const sat=document.getElementById(satId);
+  if(!sat.classList.contains('visible')) return;
+  const a=cr(anchorEl),s=cr(sat);
+  const ay=s.y<a.y?a.top:a.bot;
+  drawPath(a.x,ay,s.x,s.y<a.y?s.bot:s.top,color,1,0.3,true);
 }
 
 // ── BREADCRUMB ───────────────────────────────────────────
 function updateBc() {
-  const labels = ['New Customer'];
-  if (state.level >= 1) labels.push('Goals');
-  if (state.level >= 2 && state.goal) {
-    const g = document.getElementById('goal-'+state.goal);
-    if (g) labels.push(g.querySelector('.node-title').textContent);
-  }
-  if (state.level >= 3 && state.program) {
-    const names = {vitality:'Proof Program',aesthetics:'Mini Makeover',injury:'Injury Program'};
-    labels.push(names[state.program]||'');
-  }
-  if (state.level >= 4) labels.push(state.program==='aesthetics'?'Week 13 Review':'Year of Vitality');
-
-  document.getElementById('breadcrumb').innerHTML = labels.map((l,i) => {
-    const active = i===labels.length-1;
-    return `${i>0?'<span class="bc-sep">›</span>':''}<span class="bc-item ${active?'active':''}">${l}</span>`;
+  const labels=['New Customer'];
+  if(state.level>=1) labels.push('Goals');
+  if(state.level>=2&&state.goal){const g=document.getElementById('goal-'+state.goal);if(g)labels.push(g.querySelector('.node-title').textContent);}
+  if(state.level>=3&&state.program){const n={vitality:'Proof Program',aesthetics:'Mini Makeover',injury:'Injury Program'};labels.push(n[state.program]||'');}
+  if(state.level>=4) labels.push(state.program==='aesthetics'?'Week 13 Review':'Year of Vitality');
+  document.getElementById('breadcrumb').innerHTML=labels.map((l,i)=>{
+    const a=i===labels.length-1;
+    return`${i>0?'<span class="bc-sep">›</span>':''}<span class="bc-item ${a?'active':''}">${l}</span>`;
   }).join('');
 }
 
+function show(id){const el=document.getElementById(id);if(!el)return;el.classList.remove('hidden','dimmed');el.style.display='';el.style.opacity='';el.style.pointerEvents='';}
+function hide(id){const el=document.getElementById(id);if(el)el.style.display='none';}
+
 // ── RESET ────────────────────────────────────────────────
 function resetAll() {
-  state.level=0; state.goal=null; state.program=null;
-  clr();
+  state.level=0;state.goal=null;state.program=null;
+  clr(); mobilePathHistory=[];
+  mobTip.classList.remove('visible');
   document.getElementById('node-entry').classList.remove('active');
   document.getElementById('node-entry').classList.add('pulsing');
-
-  ['stage-goals','stage-programs','stage-escalation','stage-committed'].forEach(id => {
-    const el = document.getElementById(id);
-    el.classList.add('hidden');
-    el.style.display='';
+  ['stage-goals','stage-programs','stage-escalation','stage-committed'].forEach(id=>{
+    const el=document.getElementById(id);el.classList.add('hidden');el.style.display='';
   });
-  document.querySelectorAll('.node').forEach(n => {
-    n.classList.remove('active');
-    n.style.opacity=''; n.style.pointerEvents=''; n.style.display='';
-  });
+  document.querySelectorAll('.node').forEach(n=>{n.classList.remove('active');n.style.opacity='';n.style.pointerEvents='';n.style.display='';});
   ['sat-iv-enrolled','sat-cryo-facial','sat-iv-committed','sat-slimming'].forEach(hideSat);
   document.getElementById('back-btn').classList.remove('visible');
+  if(IS_MOBILE()) canvas.scrollTop=0;
   updateBc();
 }
 
-window.addEventListener('resize', () => {
-  if (state.level===1) setTimeout(()=>{ clr(); const ec=cr(document.getElementById('node-entry')); document.querySelectorAll('#stage-goals .node').forEach((g,i)=>{ const gc=cr(g); curve(ec.rx,ec.y,gc.lx,gc.y,g.classList.contains('triage-node')?'#D4956A':'#6B9E7A',1.1,i*0.035); }); },50);
-  else if (state.level===2) setTimeout(()=>drawGoalLevel(state.goal),50);
-  else if (state.level===3) setTimeout(()=>drawProgramLevel(state.program),50);
-  else if (state.level===4) setTimeout(()=>drawEscalationLevel(state.program==='aesthetics'?'aesthetics':'vitality'),50);
+// ── SCROLL HELPER ────────────────────────────────────────
+function scrollToStage(id) {
+  const el=document.getElementById(id);
+  if(!el) return;
+  setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),80);
+}
+
+// ── LEVEL 0→1: Entry ─────────────────────────────────────
+function clickEntry() {
+  if(state.level>0) return;
+  state.level=1;
+  const entryEl=document.getElementById('node-entry');
+  entryEl.classList.add('active');
+  entryEl.classList.remove('pulsing');
+  show('stage-goals');
+  document.getElementById('back-btn').classList.add('visible');
+  updateBc();
+
+  if(IS_MOBILE()) {
+    showMobTip(entryEl);
+    setTimeout(()=>{
+      drawMobileFan(entryEl);
+      scrollToStage('stage-goals');
+    }, 120);
+    return;
+  }
+  setTimeout(()=>{
+    clr();
+    const ec=cr(entryEl);
+    document.querySelectorAll('#stage-goals .node').forEach((g,i)=>{
+      if(g.classList.contains('addon-satellite')) return;
+      const gc=cr(g),col=g.classList.contains('triage-node')?'#D4956A':'#6B9E7A';
+      drawPath(ec.rx,ec.y,gc.lx,gc.y,col,1.1,i*0.035);
+    });
+  },80);
+}
+
+// ── LEVEL 1→2: Goal ──────────────────────────────────────
+const ivGoals=['energy','immune'],cryoGoals=['focus'],triageGoals=['pain','body'];
+
+function clickGoal(gid) {
+  if(state.level!==1) return;
+  state.level=2;state.goal=gid;
+  document.querySelectorAll('#stage-goals .node').forEach(n=>{
+    if(n.classList.contains('addon-satellite')) return;
+    if(n.id!=='goal-'+gid){n.style.opacity='0.2';n.style.pointerEvents='none';}
+    else n.classList.add('active');
+  });
+  show('stage-programs');
+  if(!triageGoals.includes(gid)){hide('prog-aesthetics');hide('prog-injury');}
+  else if(gid==='body') hide('prog-injury');
+  else if(gid==='pain') hide('prog-aesthetics');
+  show('prog-single');
+  updateBc();
+
+  const goalEl=document.getElementById('goal-'+gid);
+  const col=gid==='pain'?'#9B75B8':gid==='body'?'#C47B84':'#6B9E7A';
+
+  if(IS_MOBILE()) {
+    showMobTip(goalEl);
+    setTimeout(()=>{
+      syncSvgSize();
+      const progNodes = Array.from(document.querySelectorAll(
+        '#stage-programs .node:not(.addon-satellite)'
+      )).filter(n => n.style.display !== 'none');
+      const firstVisible = progNodes[0] || document.getElementById('prog-vitality');
+      drawMobileFanFrom(goalEl, progNodes, firstVisible, col);
+      redrawMobilePaths();
+      scrollToStage('stage-programs');
+    },120);
+    return;
+  }
+  setTimeout(()=>drawGoalLevel(gid),80);
+}
+
+function drawGoalLevel(gid) {
+  clr();
+  const ec=cr(document.getElementById('node-entry')),gc=cr(document.getElementById('goal-'+gid));
+  drawPath(ec.rx,ec.y,gc.lx,gc.y,'#E99B67',2,0);
+  ['prog-vitality','prog-aesthetics','prog-injury','prog-single'].forEach((pid,i)=>{
+    const el=document.getElementById(pid);if(!el||el.style.display==='none') return;
+    const pc=cr(el),col=pid==='prog-aesthetics'?'#C47B84':pid==='prog-injury'?'#9B75B8':pid==='prog-single'?'#BBBBBB':'#6B9E7A';
+    drawPath(gc.rx,gc.y,pc.lx,pc.y,col,pid==='prog-single'?1:1.8,i*0.07);
+  });
+  const progEl=document.getElementById('prog-vitality');
+  if(ivGoals.includes(gid)){placeSat('sat-iv-enrolled',progEl,-85);setTimeout(()=>drawDashedToSat(progEl,'sat-iv-enrolled','#3A7A7A'),400);}
+  if(cryoGoals.includes(gid)){placeSat('sat-cryo-facial',progEl,-85);setTimeout(()=>drawDashedToSat(progEl,'sat-cryo-facial','#3A7A7A'),400);}
+}
+
+// ── LEVEL 2→3: Program ───────────────────────────────────
+function clickProgram(pid) {
+  if(state.level!==2) return;
+  state.level=3;state.program=pid;
+  document.querySelectorAll('#stage-programs .node').forEach(n=>{
+    if(n.classList.contains('addon-satellite')) return;
+    const nid=n.id.replace('prog-','');
+    if(nid!==pid){n.style.opacity='0.2';n.style.pointerEvents='none';}
+    else n.classList.add('active');
+  });
+  hideSat('sat-iv-enrolled');hideSat('sat-cryo-facial');
+  show('stage-escalation');
+  if(pid==='aesthetics') hide('esc-vitality'); else hide('esc-aesthetics');
+  updateBc();
+
+  const progEl=document.getElementById('prog-'+pid);
+  const col=pid==='aesthetics'?'#C47B84':pid==='injury'?'#9B75B8':'#5B8FBF';
+
+  if(IS_MOBILE()) {
+    showMobTip(progEl);
+    setTimeout(()=>{
+      syncSvgSize();
+      const escNodes = Array.from(document.querySelectorAll(
+        '#stage-escalation .node:not(.addon-satellite)'
+      )).filter(n => n.style.display !== 'none');
+      const firstEsc = escNodes[0];
+      drawMobileFanFrom(progEl, escNodes, firstEsc, col);
+      redrawMobilePaths();
+      scrollToStage('stage-escalation');
+    },120);
+    return;
+  }
+  setTimeout(()=>drawProgramLevel(pid),80);
+}
+
+function drawProgramLevel(pid) {
+  clr();
+  const ec=cr(document.getElementById('node-entry')),gc=cr(document.getElementById('goal-'+state.goal)),pc=cr(document.getElementById('prog-'+pid));
+  drawPath(ec.rx,ec.y,gc.lx,gc.y,'#E99B6744',1.2,0);
+  const pcol=pid==='aesthetics'?'#C47B84':pid==='injury'?'#9B75B8':'#6B9E7A';
+  drawPath(gc.rx,gc.y,pc.lx,pc.y,pcol+'55',1.2,0);
+  const escId=pid==='aesthetics'?'esc-aesthetics':'esc-vitality';
+  const escEl=document.getElementById(escId),ec2=cr(escEl),ecol=pid==='aesthetics'?'#D4956A':'#5B8FBF';
+  drawPath(pc.rx,pc.y,ec2.lx,ec2.y,ecol,2,0.1);
+}
+
+// ── LEVEL 3→4: Escalation ────────────────────────────────
+function clickEscalation(eid) {
+  if(state.level!==3) return;
+  state.level=4;
+  document.querySelectorAll('#stage-escalation .node').forEach(n=>{
+    if(n.classList.contains('addon-satellite')) return;
+    const nid=n.id.replace('esc-','');
+    if(nid!==eid){n.style.opacity='0.2';n.style.pointerEvents='none';}
+    else n.classList.add('active');
+  });
+  show('stage-committed');
+  if(eid==='vitality'){hide('out-mm2');hide('out-convert');} else hide('out-yov');
+  updateBc();
+
+  const escEl=document.getElementById('esc-'+eid);
+  const col=eid==='aesthetics'?'#C47B84':'#5B8FBF';
+
+  if(IS_MOBILE()) {
+    showMobTip(escEl);
+    setTimeout(()=>{
+      syncSvgSize();
+      const outNodes = Array.from(document.querySelectorAll(
+        '#stage-committed .node:not(.addon-satellite)'
+      )).filter(n => n.style.display !== 'none');
+      const firstOut = outNodes[0];
+      drawMobileFanFrom(escEl, outNodes, firstOut, col);
+      redrawMobilePaths();
+      scrollToStage('stage-committed');
+    },120);
+    return;
+  }
+  setTimeout(()=>drawEscalationLevel(eid),80);
+}
+
+function drawEscalationLevel(eid) {
+  clr();
+  const ec=cr(document.getElementById('node-entry')),gc=cr(document.getElementById('goal-'+state.goal)),pc=cr(document.getElementById('prog-'+state.program));
+  const escEl=document.getElementById('esc-'+eid),esc=cr(escEl);
+  drawPath(ec.rx,ec.y,gc.lx,gc.y,'#E99B6733',1,0);
+  const pcol=state.program==='aesthetics'?'#C47B84':state.program==='injury'?'#9B75B8':'#6B9E7A';
+  drawPath(gc.rx,gc.y,pc.lx,pc.y,pcol+'33',1,0);
+  const ecol=eid==='aesthetics'?'#D4956A':'#5B8FBF';
+  drawPath(pc.rx,pc.y,esc.lx,esc.y,ecol+'55',1,0);
+  const outcomes=eid==='vitality'?['out-yov']:['out-mm2','out-convert'];
+  outcomes.forEach((oid,i)=>{
+    const el=document.getElementById(oid);if(!el||el.style.display==='none') return;
+    const oc=cr(el),col2=oid==='out-mm2'?'#C47B84':'#5B8FBF';
+    drawPath(esc.rx,esc.y,oc.lx,oc.y,col2,2,i*0.1);
+  });
+  if(eid==='vitality'){
+    const yovEl=document.getElementById('out-yov');
+    placeSat('sat-iv-committed',yovEl,-85);placeSat('sat-slimming',yovEl,85);
+    setTimeout(()=>{drawDashedToSat(yovEl,'sat-iv-committed','#3A7A7A');drawDashedToSat(yovEl,'sat-slimming','#3A7A7A');},400);
+  }
+}
+
+// ── RESIZE ───────────────────────────────────────────────
+window.addEventListener('resize',()=>{
+  clr();
+  if(IS_MOBILE()){redrawMobilePaths();return;}
+  if(state.level===1) setTimeout(()=>{const ec=cr(document.getElementById('node-entry'));document.querySelectorAll('#stage-goals .node').forEach((g,i)=>{if(g.classList.contains('addon-satellite'))return;const gc=cr(g);drawPath(ec.rx,ec.y,gc.lx,gc.y,g.classList.contains('triage-node')?'#D4956A':'#6B9E7A',1.1,i*0.035);});},50);
+  else if(state.level===2) setTimeout(()=>drawGoalLevel(state.goal),50);
+  else if(state.level===3) setTimeout(()=>drawProgramLevel(state.program),50);
+  else if(state.level===4) setTimeout(()=>drawEscalationLevel(state.program==='aesthetics'?'aesthetics':'vitality'),50);
 });
 
-
-
-// ── SERVICE MAP ──────────────────────────────────────────
-// Positions: [leftPct, topPct] within chart area (0-100)
-// Top = high perpetuity motivation + high freq = top-right of chart
-// Chart X = frequency, Chart Y = motivation (inverted: 0=top=high motivation)
-
-const SVC_DATA = {
-  cryo:      { label:'Whole Body Cryotherapy', freq:95, motiv:8,  tip:'Done every single program visit. Fast onset (minutes), fast decay (24–72 hrs). Requires frequency. The only true core service.' },
-  sauna:     { label:'Infrared Sauna',          freq:72, motiv:18, tip:'2–4x per week sustainably. 3–7 day decay. Part of secondary rotation inside every program.' },
-  pemf:      { label:'PEMF Therapy',            freq:65, motiv:22, tip:'Deeper cellular effect. 3–7 day decay. Rotates into Proof Program every 3rd–4th visit.' },
-  comp:      { label:'Compression + Red Light', freq:78, motiv:16, tip:'Paired together as one visit block. High tolerable frequency. Opens every Proof Program sequence.' },
-  im:        { label:'Injections (B12, Glut, Lipo, D)', freq:55, motiv:38, tip:'Visitor/Enrolled: reactive only — triggered by fatigue or specific deficiency. Committed: proactive monthly cadence.' },
-  iv:        { label:'IV Therapy',              freq:35, motiv:50, tip:'Visitor/Enrolled: event-driven. Committed: proactive — points worth 2× toward package. Frequency limited by biology (~1–2x/month max).' },
-  slimming:  { label:'Body Slimming',           freq:25, motiv:80, tip:'Once/week maximum. Committed-only package. Built into Aesthetics Program at every 3rd visit. Not sold standalone to visitors.' },
-  sculpt:    { label:'Body Sculpting',          freq:22, motiv:85, tip:'Similar cadence to slimming. Committed-only package. Pairs with slimming for body composition outcomes.' },
-  cryofacial:{ label:'Cryofacial',              freq:18, motiv:88, tip:'Triggered by: migraine, facial puffiness, skin concern. Same-day reactive upsell. Not scheduled in advance.' },
-  salt:      { label:'Dry Salt Therapy',        freq:20, motiv:82, tip:'Triggered by: respiratory complaint, sinus issue, seasonal allergy. Event only. Never proactively pitched.' },
-  sound:     { label:'Sound Therapy',           freq:22, motiv:78, tip:'Triggered by acute stress or sleep issue on that specific day. Lowest clinical priority of all services.' },
-  estim:     { label:'E-Stim (Marc Pro)',        freq:30, motiv:68, tip:'Used within Injury Program for localized recovery. Outside injury track: reactive only for muscle soreness complaints.' },
-  localcryo: { label:'Local Cryo',              freq:32, motiv:72, tip:'Primary service in Injury Program first 6 visits. Outside injury track: reactive for localized pain or swelling.' },
-};
-
-// Stage-specific positions for migrating services
-const STAGE_POS = {
-  visitor: {
-    im: [55, 50],  // in migration band
-    iv: [35, 58],  // in migration band
-  },
-  enrolled: {
-    im: [55, 50],
-    iv: [35, 58],
-  },
-  committed: {
-    im: [58, 22],  // promoted to secondary band
-    iv: [38, 30],  // promoted to secondary band
-  }
-};
-
-// Base positions (non-migrating services)
-const BASE_POS = {
-  cryo:       [88, 11],
-  sauna:      [68, 29],
-  pemf:       [62, 32],
-  comp:       [74, 25],
-  slimming:   [24, 80],
-  sculpt:     [20, 86],
-  cryofacial: [15, 90],
-  salt:       [18, 83],
-  sound:      [20, 77],
-  estim:      [28, 72],
-  localcryo:  [30, 68],
-};
-
-let currentStage = 'visitor';
-const chartEl = document.getElementById('chart');
-
-function positionDots(stage) {
-  if (!chartEl) return;
-  const cw = chartEl.clientWidth - 60;  // subtract axis space
-  const ch = chartEl.clientHeight - 40;
-  const ox = 48, oy = 16;              // offset for axis labels
-
-  // Position non-migrating
-  Object.entries(BASE_POS).forEach(([key, [lPct, tPct]]) => {
-    const el = document.getElementById('dot-'+key);
-    if (!el) return;
-    el.style.left = (ox + cw * lPct/100) + 'px';
-    el.style.top  = (oy + ch * tPct/100) + 'px';
-  });
-
-  // Position migrating
-  const migPos = STAGE_POS[stage];
-  ['im','iv'].forEach(key => {
-    const el = document.getElementById('dot-'+key);
-    if (!el) return;
-    const [lPct, tPct] = migPos[key];
-    el.style.left = (ox + cw * lPct/100) + 'px';
-    el.style.top  = (oy + ch * tPct/100) + 'px';
-    // Toggle promoted class
-    if (stage === 'committed') el.classList.add('promoted');
-    else el.classList.remove('promoted');
-  });
-}
-
-function setStage(stage) {
-  currentStage = stage;
-  document.querySelectorAll('.stg-btn').forEach(b => {
-    b.classList.toggle('active', b.textContent.toLowerCase() === stage);
-  });
-  positionDots(stage);
-}
-
-// Service tooltip
-const svcTip = document.getElementById('svc-tip');
-document.querySelectorAll('.svc-dot').forEach(dot => {
-  const key = dot.dataset.svc;
-  const data = SVC_DATA[key];
-  if (!data) return;
-  dot.addEventListener('mouseenter', e => {
-    const tier = dot.classList.contains('dot-core') ? 'Core — Every Visit' :
-                 dot.classList.contains('dot-secondary') ? 'Secondary — Rotation' :
-                 dot.classList.contains('dot-migration') ? 'Migrates with Stage' : 'Event — Reactive Only';
-    const col = dot.classList.contains('dot-core') ? '#6B9E7A' :
-                dot.classList.contains('dot-secondary') ? '#5B8FBF' :
-                dot.classList.contains('dot-migration') ? '#C9A84C' : '#5A5A62';
-    svcTip.innerHTML = `<div class="svc-tip-name">${data.label}</div>
-      <div class="svc-tip-tag" style="color:${col}">${tier}</div>
-      <div>${data.tip}</div>`;
-    svcTip.classList.add('visible');
-  });
-  dot.addEventListener('mousemove', e => {
-    let x = e.clientX+14, y = e.clientY-10;
-    if (x+230 > window.innerWidth) x = e.clientX-238;
-    svcTip.style.left = x+'px'; svcTip.style.top = y+'px';
-  });
-  dot.addEventListener('mouseleave', () => svcTip.classList.remove('visible'));
-});
-
-// Init and resize
-function initServiceMap() {
-  setTimeout(() => positionDots(currentStage), 50);
-}
-
-window.addEventListener('resize', () => {
-  if (document.getElementById('tab-services').classList.contains('active')) {
-    positionDots(currentStage);
-  }
-});
-
-
-
-function switchTab(tab) {
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-'+tab).classList.add('active');
-  document.getElementById('tbtn-'+tab).classList.add('active');
-  if (tab === 'services') {
-    initServiceMap();
-    document.getElementById('main-hint').textContent = 'Toggle stage · Hover dots for details';
-  } else {
-    document.getElementById('main-hint').textContent = 'Click any node · Hover for details';
-  }
-}
-
+updateBc();
 </script>
 </body>
 </html>

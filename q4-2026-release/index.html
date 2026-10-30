@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<title>riseOS Q4 2026 Release</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@200..700&display=swap">
+<style>
+/* Layout: RISE Release Hub. A peach masthead, a narrow prose column for the story, and wide scroll-driven
+   walkthroughs where the real deck slide stays pinned and plays one click per step as the text scrolls by. */
+:root {
+  --bg: #F8F4EE; --surface: #FFFFFF; --fg: #1A1714; --fg2: #3D332C; --fg3: #6B5D52; --fg4: #A89B91;
+  --line: #D9CFC5; --soft: #EFE8E0; --accent: #C97142; --accent-soft: #FFF1E2; --accent-line: #F4CCAC; --peach: #F59A65;
+  --mast: #C97142; --mast-fg: #FFFFFF;
+  --live-bg: #EEFAF2; --live-fg: #1B7A43; --live-line: #BEE6CD; --beta-bg: #FFF5EB; --beta-fg: #BF5E12; --beta-line: #F9D3AE; --plan-bg: #EFF5FF; --plan-fg: #2B62D6; --plan-line: #C3D6FA; --head: #FAF7F3;
+  --shadow: 0 24px 60px rgba(61,51,44,.16), 0 4px 14px rgba(61,51,44,.07);
+  --font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --wrap: 1240px; --prose: 700px; --figtop: 15vh;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #171412; --surface: #221D19; --fg: #F3ECE4; --fg2: #DCD2C8; --fg3: #B3A698; --fg4: #85786D;
+  --line: #3A322C; --soft: #2A241F; --accent: #F4AD80; --accent-soft: #33251C; --accent-line: #5A3D2B; --peach: #F59A65;
+  --mast: #A85C33; --mast-fg: #FFFFFF;
+  --live-bg: #132C1E; --live-fg: #8ED7AC; --live-line: #25553A; --beta-bg: #36230F; --beta-fg: #F4B57A; --beta-line: #69411E; --plan-bg: #15233D; --plan-fg: #9CBAF4; --plan-line: #2D4775; --head: #1E1A17;
+  --shadow: 0 24px 60px rgba(0,0,0,.45), 0 4px 14px rgba(0,0,0,.3); color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #171412; --surface: #221D19; --fg: #F3ECE4; --fg2: #DCD2C8; --fg3: #B3A698; --fg4: #85786D;
+  --line: #3A322C; --soft: #2A241F; --accent: #F4AD80; --accent-soft: #33251C; --accent-line: #5A3D2B; --peach: #F59A65;
+  --mast: #A85C33; --mast-fg: #FFFFFF;
+  --live-bg: #132C1E; --live-fg: #8ED7AC; --live-line: #25553A; --beta-bg: #36230F; --beta-fg: #F4B57A; --beta-line: #69411E; --plan-bg: #15233D; --plan-fg: #9CBAF4; --plan-line: #2D4775; --head: #1E1A17;
+  --shadow: 0 24px 60px rgba(0,0,0,.45), 0 4px 14px rgba(0,0,0,.3); color-scheme: dark }
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 400 17px/1.6 var(--font); -webkit-font-smoothing: antialiased; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.gut { padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: var(--wrap); margin: 0 auto; }
+.prose { max-width: var(--prose); }
+h1, h2, h3, h4 { margin: 0; text-wrap: balance; }
+p { margin: 0; }
+a { color: inherit; }
+.ic { display: inline-flex; width: 18px; height: 18px; flex: none; }
+svg.lucide { stroke-width: 1.6; }
+#bar { position: fixed; left: 0; top: env(safe-area-inset-top, 0px); height: 3px; width: 100%; transform-origin: 0 50%; transform: scaleX(0); background: var(--peach); z-index: 11; }
+
+/* masthead */
+.mast { background: var(--mast); color: var(--mast-fg); padding-block: 40px 38px; }
+.mast .row { display: flex; align-items: center; gap: 18px; }
+.mast img { height: 26px; width: auto; display: block; }
+.mast .div { width: 1px; height: 22px; background: rgba(255,255,255,.4); }
+.mast .lab { font-size: 12px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; opacity: .92; }
+.mast .h { margin-top: 22px; font-weight: 200; font-size: clamp(26px, 4vw, 36px); letter-spacing: .01em; line-height: 1.1; }
+
+/* doc head */
+.head { padding-block: 48px 8px; display: flex; flex-direction: column; gap: 18px; }
+.pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { display: inline-flex; align-items: center; height: 26px; padding: 0 9px; border-radius: 5px; border: 1px solid transparent; font-size: 12.5px; font-weight: 500; white-space: nowrap; }
+.pill.sm { height: 22px; padding: 0 7px; font-size: 11px; vertical-align: middle; }
+.p-new { background: var(--accent); border-color: var(--accent); color: #fff; }
+.p-live { background: var(--live-bg); color: var(--live-fg); border-color: var(--live-line); }
+.p-beta { background: var(--beta-bg); color: var(--beta-fg); border-color: var(--beta-line); }
+.p-plan { background: var(--plan-bg); color: var(--plan-fg); border-color: var(--plan-line); }
+.head h1 { font-weight: 200; font-size: clamp(40px, 6.4vw, 76px); line-height: 1.02; letter-spacing: -.03em; }
+.meta { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--fg3); }
+.meta .sun { width: 24px; height: 24px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: inline-flex; align-items: center; justify-content: center; }
+.meta .sun .ic { width: 14px; height: 14px; }
+.intro { display: flex; flex-direction: column; gap: 14px; font-size: 19px; line-height: 1.6; color: var(--fg2); margin-top: 6px; }
+.howto { display: flex; gap: 14px; align-items: flex-start; padding: 16px 18px; border-radius: 14px; background: var(--accent-soft); border: 1px solid var(--accent-line); font-size: 15px; line-height: 1.5; color: var(--fg2); }
+.howto .ic { color: var(--accent); width: 20px; height: 20px; margin-top: 1px; }
+
+/* overview table */
+.ovs { padding-block: 36px 8px; }
+.tblwrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; }
+.ovt { width: 100%; border-collapse: collapse; font-size: 15px; }
+.ovt th { text-align: left; padding: 13px 20px; font-size: 13px; font-weight: 500; color: var(--fg3); background: var(--head); border-bottom: 1px solid var(--line); white-space: nowrap; }
+.ovt td { padding: 14px 20px; border-top: 1px solid var(--soft); vertical-align: middle; font-size: 14px; }
+.ovt tbody tr:first-child td { border-top: 0; }
+.ovt tbody tr:hover td { background: var(--accent-soft); }
+.fn { display: inline-flex; align-items: flex-start; gap: 11px; font-weight: 400; color: var(--fg); }
+.fn > .ic { color: var(--accent); margin-top: 2px; }
+.fnt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.vd { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 400; color: var(--accent); text-decoration: none; white-space: nowrap; }
+.vd .go { width: 13px; height: 13px; transition: transform .2s; }
+.vd:hover { text-decoration: underline; }
+.vd:hover .go, .vd:focus-visible .go { transform: translateY(2px); }
+.ovt .fc { color: var(--fg3); white-space: nowrap; }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* parts + features */
+.part { padding-top: 96px; }
+.parthead { display: flex; flex-direction: column; gap: 14px; padding-bottom: 12px; }
+.parthead .pn { font-size: 13px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: var(--accent); }
+.parthead h2 { font-weight: 200; font-size: clamp(36px, 5.2vw, 60px); line-height: 1.04; letter-spacing: -.025em; }
+.parthead p { font-size: 18px; color: var(--fg2); }
+.feature { padding-top: 64px; }
+.feature > header { display: flex; flex-direction: column; gap: 14px; padding-top: 30px; border-top: 1px solid var(--line); }
+.cat { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; color: var(--accent); font-size: 12px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
+.cat .pill { margin-left: 6px; letter-spacing: .01em; text-transform: none; }
+.feature h3 { font-weight: 300; font-size: clamp(30px, 3.8vw, 44px); line-height: 1.1; letter-spacing: -.02em; }
+.feature .lead { font-size: 19px; font-weight: 600; line-height: 1.45; color: var(--fg); }
+.feature header p:not(.lead) { color: var(--fg2); }
+
+/* walkthrough widget: one per feature, screen on top, step bar below */
+.walk { --w: min(100%, calc((100vh - 230px) * var(--ar, 1.7778))); width: max(var(--w), min(100%, 640px)); margin: 40px auto 0; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; box-shadow: var(--shadow); }
+.screen { position: relative; aspect-ratio: var(--ar, 1.7778); width: 100%; background: var(--accent-soft); border-bottom: 1px solid var(--line); }
+.screen iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; opacity: 0; transition: opacity .5s; }
+.walk.live .screen iframe { opacity: 1; }
+.poster { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--accent); font-size: 14px; font-weight: 500; }
+.poster .ic { width: 16px; height: 16px; }
+.bar2 { padding: 20px 28px 24px; }
+.stepcard { min-width: 0; display: flex; flex-direction: column; }
+.ctl { position: absolute; left: 14px; top: 14px; z-index: 3; display: flex; align-items: center; gap: 12px; padding: 6px; border-radius: 999px; background: rgba(255,255,255,.96); box-shadow: 0 10px 28px rgba(40,28,20,.22), 0 2px 6px rgba(40,28,20,.10); }
+.prog { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 104px; }
+.prog .eb { font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: #C97142; white-space: nowrap; }
+.cnt { font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 13px; color: #6B5D52; }
+.cnt b { color: #1A1714; font-weight: 600; }
+.nav { width: 38px; height: 38px; border-radius: 50%; border: 1px solid #D9CFC5; background: #FFFFFF; color: #1A1714; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background .2s, color .2s, border-color .2s, opacity .2s; }
+.nav .ic { width: 18px; height: 18px; }
+.nav.next { background: #F59A65; border-color: #F59A65; color: #fff; }
+.nav:hover:not(:disabled) { border-color: #C97142; color: #C97142; }
+.nav.next:hover:not(:disabled) { background: #C97142; border-color: #C97142; color: #fff; }
+.nav:disabled { opacity: .35; cursor: default; }
+.track { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(255,255,255,.55); z-index: 3; }
+.track i { display: block; height: 100%; width: 0; background: #F59A65; transition: width .4s; }
+.nav:focus-visible, .vd:focus-visible { outline: 2px solid var(--peach); outline-offset: 3px; }
+.step { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; animation: stepin .35s ease both; }
+.step[hidden] { display: none; }
+.ctx { font-size: 11.5px; font-weight: 600; letter-spacing: .06em; padding: 4px 9px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); }
+.step b { font-size: 20px; font-weight: 600; line-height: 1.3; color: var(--fg); }
+.step p { font-size: 16.5px; line-height: 1.6; color: var(--fg2); max-width: 68ch; }
+@keyframes stepin { from { opacity: 0; transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) { .step { animation: none; } }
+
+/* close */
+.close { padding-block: 96px 40px; }
+.close .card { background: linear-gradient(120deg, #C2652F 0%, #F59A65 100%); color: #fff; border-radius: 24px; padding: clamp(28px, 5vw, 56px); display: flex; flex-direction: column; gap: 14px; }
+.emb { display: flex; align-items: center; gap: 10px; }
+.embi { width: 34px; height: 34px; border-radius: 9px; background: #fff; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(61,51,44,.18); }
+.embi img { width: 24px; height: 24px; display: block; }
+.emb .wm { font-size: 22px; font-weight: 300; letter-spacing: -.03em; color: #fff; line-height: 1; }
+.emb .wm b { font-weight: 650; }
+.close .card h2 { white-space: nowrap; font-weight: 200; font-size: clamp(20px, 6vw, 58px); line-height: 1.04; letter-spacing: -.025em; }
+.close .card p { font-size: 18px; line-height: 1.55; max-width: 640px; opacity: .95; }
+.more { padding-block: 48px 0; display: flex; flex-direction: column; gap: 16px; }
+.more h3 { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 600; }
+.more h3 .ic { color: var(--accent); width: 20px; height: 20px; }
+.more ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.more li { display: flex; gap: 14px; align-items: flex-start; padding: 14px 0; border-top: 1px solid var(--line); font-size: 16px; color: var(--fg2); }
+.more li .ic { color: var(--accent); margin-top: 3px; }
+.foot { margin-top: 56px; padding-block: 22px 56px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; font-size: 13.5px; color: var(--fg4); }
+
+@media (max-width: 900px) {
+  .ovt .fc { display: none; }
+  .ovt th, .ovt td { padding: 12px 7px; }
+  .ovt th:first-child, .ovt td:first-child { padding-left: 12px; }
+  .ovt th:last-child, .ovt td:last-child { padding-right: 12px; }
+  .ovt .fn { align-items: flex-start; gap: 8px; font-size: 14px; line-height: 1.3; }
+  .ovt .fn > .ic { display: none; }
+  .ovt .fn { hyphens: auto; }
+  .ovt .pill { height: 24px; padding: 0 7px; font-size: 11.5px; }
+  .ovt th { font-size: 12px; }
+  .walk { width: 100%; border-radius: 16px; }
+  .bar2 { padding: 16px 16px 20px; }
+  .ctl { left: 8px; top: 8px; gap: 6px; padding: 4px; }
+  .nav { width: 30px; height: 30px; }
+  .nav .ic { width: 15px; height: 15px; }
+  .prog { min-width: 86px; gap: 1px; }
+  .prog .eb { font-size: 8.5px; }
+  .cnt { font-size: 11.5px; }
+  .part { padding-top: 72px; }
+}
+</style>
+
+<div id="bar" aria-hidden="true"></div>
+
+<header class="mast gut"><div class="wrap">
+  <div class="row"><img src="assets/logo-rise-horizontal-white.png" alt="RISE Modern Wellness"><span class="div"></span><span class="lab">Release Hub</span></div>
+  <div class="h">All product releases &amp; updates</div>
+</div></header>
+
+<main class="gut"><div class="wrap">
+  <section class="head">
+    <div class="pills"><span class="pill p-new">New release</span><span class="pill p-beta">In beta</span><span class="pill p-plan">On the roadmap</span></div>
+    <h1>riseOS Q4 2026 Release</h1>
+    <div class="meta"><span class="sun"><i data-lucide="sun" class="ic"></i></span><span>Shared by RISE Modern Wellness · October 30, 2026</span></div>
+    <div class="intro prose">
+      <p>In the keynote we promised one system for every store. This release is that system taking shape: five releases going live this quarter, four in beta on the floor, and three on the roadmap.</p>
+      <p>Each feature below has a See How It Works walkthrough of the real screens, one step at a time, the same way they were presented live.</p>
+    </div>
+    <div class="howto prose"><i data-lucide="mouse-pointer-click" class="ic"></i><span>Under each feature, use the arrows in the See How It Works pill on the screen to step forward and back through the walkthrough. The screen plays each step as you go. On a keyboard, the left and right arrow keys work too.</span></div>
+  </section>
+
+  <nav class="ovs" aria-label="What’s in this release"><div class="tblwrap"><table class="ovt"><thead><tr><th>Feature</th><th class="fc">Area</th><th>Status</th></tr></thead><tbody><tr><td><span class="fn"><i data-lucide="messages-square" class="ic "></i><span class="fnt"><span>Auto-Logging Client Communication</span><a class="vd" href="#client-communication">View details<i data-lucide="arrow-down" class="ic go"></i></a></span></span></td><td class="fc">Client communication</td><td><span class="pill p-live">Releasing in Q4</span></td></tr><tr><td><span class="fn"><i data-lucide="layout-template" class="ic "></i><span class="fnt"><span>Landing Pages</span><a class="vd" href="#landing-pages">View details<i data-lucide="arrow-down" class="ic go"></i></a></span></span></td><td class="fc">Marketing</td><td><span class="pill p-live">Releasing in Q4</span></td></tr><tr><td><span class="fn"><i data-lucide="image" class="ic "></i><span class="fnt"><span>Media Assets</span><a class="vd" href="#media-assets">View details<i data-lucide="arrow-down" class="ic go"></i></a></span></span></td><td class="fc">Marketing</td><td><span class="pill p-live">Releasing in Q4</span></td></tr><tr><td><span class="fn"><i data-lucide="life-buoy" class="ic "></i><span class="fnt"><span>Mobile-First Help Center</span><a class="vd" href="#help-center">View details<i data-lucide="arrow-down" class="ic go"></i></a></span></span></td><td class="fc">Support</td><td><span class="pill p-live">Releasing in Q4</span></td></tr><tr><td><span class="fn"><i data-lucide="ticket" class="ic "></i><span class="fnt"><span>AI-Generated Support Tickets</span><a class="vd" href="#support-tickets">View details<i data-lucide="arrow-down" class="ic go"></i></a></span></span></td><td class="fc">Support</td><td><span class="pill p-live">Releasing in Q4</span></td></tr><tr><td><span class="fn"><i data-lucide="sparkles" class="ic "></i><span class="fnt"><span>Program Recommendation Engine</span><a class="vd" href="#recommendation-engine">View details<i data-lucide="arrow-down" class="ic go"></i></a></span></span></td><td class="fc">Health screening</td><td><span class="pill p-beta">In beta</span></td></tr><tr><td><span class="fn"><i data-lucide="calendar-check" class="ic "></i><span class="fnt"><span>Program Tracker</span><a class="vd" href="#program-tracker">View details<i data-lucide="arrow-down" class="ic go"></i></a></span></span></td><td class="fc">Operations</td><td><span class="pill p-beta">In beta</span></td></tr><tr><td><span class="fn"><i data-lucide="target" class="ic "></i><span class="fnt"><span>Goal Dashboard</span><a class="vd" href="#goal-dashboard">View details<i data-lucide="arrow-down" class="ic go"></i></a></span></span></td><td class="fc">Performance</td><td><span class="pill p-beta">In beta</span></td></tr><tr><td><span class="fn"><i data-lucide="heart-pulse" class="ic "></i><span class="fnt"><span>Incorporating Biometrics</span><a class="vd" href="#biometrics">View details<i data-lucide="arrow-down" class="ic go"></i></a></span></span></td><td class="fc">Biometrics</td><td><span class="pill p-beta">In beta</span></td></tr><tr><td><span class="fn"><i data-lucide="smartphone" class="ic "></i><span class="fnt"><span>RISE Client App</span><a class="vd" href="#client-app">View details<i data-lucide="arrow-down" class="ic go"></i></a></span></span></td><td class="fc">Client app</td><td><span class="pill p-plan">On the roadmap</span></td></tr><tr><td><span class="fn"><i data-lucide="message-circle-question" class="ic "></i><span class="fnt"><span>Ask riseOS</span><a class="vd" href="#ask-riseos">View details<i data-lucide="arrow-down" class="ic go"></i></a></span></span></td><td class="fc">AI assistant</td><td><span class="pill p-plan">On the roadmap</span></td></tr><tr><td><span class="fn"><i data-lucide="scan-line" class="ic "></i><span class="fnt"><span>Body Scan With Prism SDK</span><a class="vd" href="#body-scan">View details<i data-lucide="arrow-down" class="ic go"></i></a></span></span></td><td class="fc">Body scan</td><td><span class="pill p-plan">On the roadmap</span></td></tr></tbody></table></div></nav>
+
+  <section class="part" id="launching">
+  <div class="parthead prose"><span class="pn">Part 1</span><h2>Launching This Quarter</h2><p>Five releases going live in every store by the end of the quarter. They cover how you talk to clients, how you bring new ones in, and how you get help when something breaks.</p></div>
+  <article class="feature" id="client-communication">
+  <header class="prose">
+    <div class="cat"><i data-lucide="messages-square" class="ic "></i><span>Client communication</span><span class="pill p-live">Releasing in Q4</span></div>
+    <h3>Auto-Logging Client Communication</h3>
+    <p class="lead">Every call, text and email with a client is logged automatically, in one timeline.</p>
+    <p>Until now, client conversations lived in three places: calls in one RingCentral tab, texts in another, and email in a shared Gmail inbox. Calls weren’t recorded, so when something was missed, nobody could check what was actually said.</p><p>Auto-logging puts every conversation on one timeline for each client, records and transcribes every call, and feeds the same history into Pipeline.</p>
+  </header>
+  <div class="walk" id="client-communication-walk" data-slides="4,5" data-x="600" style="--ar:1.2222">
+  <div class="screen"><div class="poster"><i data-lucide="play" class="ic "></i><span>Loading the walkthrough</span></div>
+    <div class="ctl">
+      <button type="button" class="nav prev" aria-label="Previous step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+      <div class="prog"><span class="eb">See How It Works</span><span class="cnt">Step <b>1</b> of 15</span></div>
+      <button type="button" class="nav next" aria-label="Next step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+    <div class="track"><i></i></div>
+  </div>
+  <div class="bar2"><div class="stepcard" aria-live="polite"><div class="step" data-i="0" data-b="0"><span class="ctx">One unified timeline</span><b>Where we started</b><p>Calls sit in one RingCentral tab, texts in another, and email in a shared Gmail inbox. Nothing lines up on one timeline, calls aren’t recorded, and sticky notes fill the gaps. When a client says they called, it’s one person’s word against another’s.</p></div><div class="step" data-i="0" data-b="1" hidden><span class="ctx">One unified timeline</span><b>Everything in one place</b><p>riseOS brings calls, texts and emails together, on one timeline for every client.</p></div><div class="step" data-i="0" data-b="2" hidden><span class="ctx">One unified timeline</span><b>New activity is flagged</b><p>The list on the left shows every client you talk to. New texts, calls and emails are flagged, so nothing sits unanswered.</p></div><div class="step" data-i="0" data-b="3" hidden><span class="ctx">One unified timeline</span><b>The whole relationship</b><p>Pick a client and the middle column shows the full history: texts, calls and emails in the order they happened.</p></div><div class="step" data-i="0" data-b="4" hidden><span class="ctx">One unified timeline</span><b>Calls are recorded and transcribed</b><p>Every call is logged automatically, with the recording and a full transcript right under the play button. You can check what was said instead of guessing.</p></div><div class="step" data-i="0" data-b="5" hidden><span class="ctx">One unified timeline</span><b>Search every channel</b><p>Because calls are transcribed, they’re searchable. Type “red light” and riseOS finds every mention, whether it came up in a text, an email or a call.</p></div><div class="step" data-i="0" data-b="6" hidden><span class="ctx">One unified timeline</span><b>The Guest Snapshot</b><p>On the right: name, drive time, city, last and next visit, purchases and vitality score. Personal context your team captures on purpose, kept in one place.</p></div><div class="step" data-i="0" data-b="7" hidden><span class="ctx">One unified timeline</span><b>Context for the life of the client</b><p>This history stays with the client for as long as they’re with you. It also powers Pipeline, below.</p></div><div class="step" data-i="1" data-b="0" hidden><span class="ctx">Auto-logging in Pipeline</span><b>Every lead on one board</b><p>Pipeline shows every lead from every campaign in three columns: Lead, Scheduled and Arrived.</p></div><div class="step" data-i="1" data-b="1" hidden><span class="ctx">Auto-logging in Pipeline</span><b>Cold leads turn red</b><p>If nobody has contacted a lead in a few days, the card is flagged red so it doesn’t go cold.</p></div><div class="step" data-i="1" data-b="2" hidden><span class="ctx">Auto-logging in Pipeline</span><b>Open a lead</b><p>Click a card, like Maya from the Black Friday Special, and the client’s whole journey opens in a panel.</p></div><div class="step" data-i="1" data-b="3" hidden><span class="ctx">Auto-logging in Pipeline</span><b>Every touchpoint, already logged</b><p>The client’s text, our reply and the follow-up call are all there, with the call transcribed. You can see at a glance whether anyone called the client.</p></div><div class="step" data-i="1" data-b="4" hidden><span class="ctx">Auto-logging in Pipeline</span><b>Booking moves the card for you</b><p>When Maya books in Zenoti, riseOS picks it up. The appointment appears on the client’s card and the stage changes to Scheduled automatically.</p></div><div class="step" data-i="1" data-b="5" hidden><span class="ctx">Auto-logging in Pipeline</span><b>Nobody drags anything</b><p>Close the panel and Maya’s card is already in Scheduled.</p></div><div class="step" data-i="1" data-b="6" hidden><span class="ctx">Auto-logging in Pipeline</span><b>Know which leads were worked</b><p>Pipeline shows which leads have been contacted and which haven’t. It’s the same auto-logging, seen lead by lead.</p></div></div></div>
+</div>
+</article><article class="feature" id="landing-pages">
+  <header class="prose">
+    <div class="cat"><i data-lucide="layout-template" class="ic "></i><span>Marketing</span><span class="pill p-live">Releasing in Q4</span></div>
+    <h3>Landing Pages</h3>
+    <p class="lead">Build the whole page inside riseOS, with tracking and booking built in.</p>
+    <p>Campaign Builder, the first version, gave you a form to embed on a page you already had. Landing Pages replaces it with the whole page: built in riseOS from proven templates, tracked automatically, and booking the visit on the spot.</p><p>Every page is powered by our own domain, offers.risemodernwellness.com, so clients see a real RISE address, not a third-party link. Every lead a page captures goes straight into Pipeline.</p>
+  </header>
+  <div class="walk" id="landing-pages-walk" data-slides="7,8,9" data-x="600" style="--ar:1.2222">
+  <div class="screen"><div class="poster"><i data-lucide="play" class="ic "></i><span>Loading the walkthrough</span></div>
+    <div class="ctl">
+      <button type="button" class="nav prev" aria-label="Previous step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+      <div class="prog"><span class="eb">See How It Works</span><span class="cnt">Step <b>1</b> of 17</span></div>
+      <button type="button" class="nav next" aria-label="Next step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+    <div class="track"><i></i></div>
+  </div>
+  <div class="bar2"><div class="stepcard" aria-live="polite"><div class="step" data-i="0" data-b="0"><span class="ctx">From Campaign Builder to Landing Pages</span><b>Where we started</b><p>Campaign Builder was a form widget you embedded on a page you already had.</p></div><div class="step" data-i="0" data-b="1" hidden><span class="ctx">From Campaign Builder to Landing Pages</span><b>Embedding was the hard part</b><p>To use it, you had to paste code onto your website.</p></div><div class="step" data-i="0" data-b="2" hidden><span class="ctx">From Campaign Builder to Landing Pages</span><b>And a lot more set-up</b><p>Then set up Google Tag Manager and conversion tracking, figure out where the leads went, and find someone to build a page around the form.</p></div><div class="step" data-i="0" data-b="3" hidden><span class="ctx">From Campaign Builder to Landing Pages</span><b>Now it’s one thing</b><p>Landing Pages builds the whole page inside riseOS. It’s tracked, and it books the visit on the spot.</p></div><div class="step" data-i="0" data-b="4" hidden><span class="ctx">From Campaign Builder to Landing Pages</span><b>A page for every offer</b><p>A sauna offer, a cryo week, a gift card, a grand opening. Each page gets its own look, built on locked brand templates.</p></div><div class="step" data-i="0" data-b="5" hidden><span class="ctx">From Campaign Builder to Landing Pages</span><b>No code, no tags</b><p>There’s nothing to install, and every lead lands in Pipeline.</p></div><div class="step" data-i="1" data-b="0" hidden><span class="ctx">Edit the last 10%</span><b>Start from what’s worked</b><p>You never start from a blank page. Every template is built from what has worked across more than $1 million in ad spend. We give you the best page, and you make the last 10% your own.</p></div><div class="step" data-i="1" data-b="1" hidden><span class="ctx">Edit the last 10%</span><b>Click a page to edit it</b><p>A panel opens on the side.</p></div><div class="step" data-i="1" data-b="2" hidden><span class="ctx">Edit the last 10%</span><b>Change the words</b><p>Edit the headline, the button and the offer date, and the preview updates as you type. Layout, brand, tracking and booking stay locked, so anyone on your team can make changes without breaking anything.</p></div><div class="step" data-i="1" data-b="3" hidden><span class="ctx">Edit the last 10%</span><b>Publish</b><p>The page is live in seconds.</p></div><div class="step" data-i="2" data-b="0" hidden><span class="ctx">Card on file</span><b>The booking flow today</b><p>A lead form, then a calendar, then you hope they show up. This is the booking flow editor for the same page: lead form, pick a time, booked.</p></div><div class="step" data-i="2" data-b="1" hidden><span class="ctx">Card on file</span><b>One switch</b><p>The editor has a single setting for it: card on file.</p></div><div class="step" data-i="2" data-b="2" hidden><span class="ctx">Card on file</span><b>Turn it on</b><p>Flip the switch for this page.</p></div><div class="step" data-i="2" data-b="3" hidden><span class="ctx">Card on file</span><b>A new step appears</b><p>The flow adds a step: we’re holding your spot. The client saves a card or uses Apple Pay right on the page, processed through Stripe. This wasn’t possible before.</p></div><div class="step" data-i="2" data-b="4" hidden><span class="ctx">Card on file</span><b>The full flow</b><p>Info, time, hold your spot, booked.</p></div><div class="step" data-i="2" data-b="5" hidden><span class="ctx">Card on file</span><b>Turn it off for a page</b><p>Switch it off and the step disappears from that page’s flow.</p></div><div class="step" data-i="2" data-b="6" hidden><span class="ctx">Card on file</span><b>Your call, page by page</b><p>Use card on file on one page and leave it off another. Card on file stays in a limited beta through Q4, with a system-wide rollout planned for Q1 2027.</p></div></div></div>
+</div>
+</article><article class="feature" id="media-assets">
+  <header class="prose">
+    <div class="cat"><i data-lucide="image" class="ic "></i><span>Marketing</span><span class="pill p-live">Releasing in Q4</span></div>
+    <h3>Media Assets</h3>
+    <p class="lead">Every RISE marketing asset, ready to customize and print.</p>
+    <p>Media Assets is one library for every piece of RISE marketing: business cards, flyers, A-frame signs, rollable banners, social posts and gift cards. Your brand, logo and location are filled in for you. Change what’s yours and download a print-ready file.</p>
+  </header>
+  <div class="walk" id="media-assets-walk" data-slides="11" data-x="600" style="--ar:1.2222">
+  <div class="screen"><div class="poster"><i data-lucide="play" class="ic "></i><span>Loading the walkthrough</span></div>
+    <div class="ctl">
+      <button type="button" class="nav prev" aria-label="Previous step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+      <div class="prog"><span class="eb">See How It Works</span><span class="cnt">Step <b>1</b> of 7</span></div>
+      <button type="button" class="nav next" aria-label="Next step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+    <div class="track"><i></i></div>
+  </div>
+  <div class="bar2"><div class="stepcard" aria-live="polite"><div class="step" data-i="0" data-b="0"><b>The library</b><p>Your recent designs are at the top, with a template for everything below: business cards, flyers, A-frame signs, rollable banners, social posts and gift cards.</p></div><div class="step" data-i="0" data-b="1" hidden><b>Start a new design</b><p>Click New design.</p></div><div class="step" data-i="0" data-b="2" hidden><b>Pick a template</b><p>Choose a business card. Your brand, logo and location are already filled in.</p></div><div class="step" data-i="0" data-b="3" hidden><b>Change what’s yours</b><p>Edit details like your role, and the card updates as you type. The logo and colors are locked, so every card stays on brand.</p></div><div class="step" data-i="0" data-b="4" hidden><b>Download in one click</b><p>Get a print-ready PDF with bleed, a PNG or a JPG, or order prints.</p></div><div class="step" data-i="0" data-b="5" hidden><b>Not just business cards</b><p>The same library has a rollable banner. Change the headline, the photo, the offer and the QR link.</p></div><div class="step" data-i="0" data-b="6" hidden><b>Ready for the printer</b><p>Download the print-ready PDF and send it straight to your printer.</p></div></div></div>
+</div>
+</article><article class="feature" id="help-center">
+  <header class="prose">
+    <div class="cat"><i data-lucide="life-buoy" class="ic "></i><span>Support</span><span class="pill p-live">Releasing in Q4</span></div>
+    <h3>Mobile-First Help Center</h3>
+    <p class="lead">Every answer, verified, right on your phone.</p>
+    <p>The Help Center is built for your phone first. Search as you type, read step-by-step articles that show when they were last verified, tell us when something is missing, and ask riseOS when you’d rather not search.</p>
+  </header>
+  <div class="walk" id="help-center-walk" data-slides="13" data-x="600" style="--ar:1.2222">
+  <div class="screen"><div class="poster"><i data-lucide="play" class="ic "></i><span>Loading the walkthrough</span></div>
+    <div class="ctl">
+      <button type="button" class="nav prev" aria-label="Previous step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+      <div class="prog"><span class="eb">See How It Works</span><span class="cnt">Step <b>1</b> of 10</span></div>
+      <button type="button" class="nav next" aria-label="Next step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+    <div class="track"><i></i></div>
+  </div>
+  <div class="bar2"><div class="stepcard" aria-live="polite"><div class="step" data-i="0" data-b="0"><b>Opens to search</b><p>The Help Center opens to “How can we help?” and a search bar.</p></div><div class="step" data-i="0" data-b="1" hidden><b>Results as you type</b><p>Tap search and type “walk-in”. Results show up as you type, each with the section it lives in.</p></div><div class="step" data-i="0" data-b="2" hidden><b>Step-by-step articles</b><p>Tap “How to Convert a Walk-In”. Every article is clean and laid out step by step.</p></div><div class="step" data-i="0" data-b="3" hidden><b>Verified, with a date</b><p>Under the title, a Verified badge shows when the article was last reviewed, so you know it’s correct and current.</p></div><div class="step" data-i="0" data-b="4" hidden><b>Keep going</b><p>At the bottom: Was this helpful? and related articles.</p></div><div class="step" data-i="0" data-b="5" hidden><b>Tell us what was missing</b><p>Tap thumbs down and a box opens asking what was missing. That feedback comes straight to our team, so articles keep getting better.</p></div><div class="step" data-i="0" data-b="6" hidden><b>Browse every topic</b><p>Open the menu to see every topic, with the article you’re on highlighted.</p></div><div class="step" data-i="0" data-b="7" hidden><b>Ask riseOS</b><p>Tap Ask riseOS at the bottom of any screen.</p></div><div class="step" data-i="0" data-b="8" hidden><b>Answers in seconds</b><p>Ask a question in plain words. riseOS searches the Help Center and answers in seconds.</p></div><div class="step" data-i="0" data-b="9" hidden><b>Every answer has a source</b><p>Each answer links to the article it came from, so you can read the whole thing.</p></div></div></div>
+</div>
+</article><article class="feature" id="support-tickets">
+  <header class="prose">
+    <div class="cat"><i data-lucide="ticket" class="ic "></i><span>Support</span><span class="pill p-live">Releasing in Q4</span></div>
+    <h3>AI-Generated Support Tickets</h3>
+    <p class="lead">Report a problem in seconds and track it until it’s fixed.</p>
+    <p>Support tickets pick up where the Help Center leaves off. When an article doesn’t solve it, riseOS creates the ticket from your conversation, assigns an owner, and keeps you updated in a thread that reads like a text conversation.</p>
+  </header>
+  <div class="walk" id="support-tickets-walk" data-slides="15" data-x="600" style="--ar:1.2222">
+  <div class="screen"><div class="poster"><i data-lucide="play" class="ic "></i><span>Loading the walkthrough</span></div>
+    <div class="ctl">
+      <button type="button" class="nav prev" aria-label="Previous step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+      <div class="prog"><span class="eb">See How It Works</span><span class="cnt">Step <b>1</b> of 15</span></div>
+      <button type="button" class="nav next" aria-label="Next step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+    <div class="track"><i></i></div>
+  </div>
+  <div class="bar2"><div class="stepcard" aria-live="polite"><div class="step" data-i="0" data-b="0"><b>Starts in the Help Center</b><p>Support tickets pick up right where the Help Center leaves off.</p></div><div class="step" data-i="0" data-b="1" hidden><b>Describe the problem</b><p>Say your infrared sauna isn’t getting hot anymore. Ask riseOS. It points you to the troubleshooting article first and asks whether you’ve restarted the unit.</p></div><div class="step" data-i="0" data-b="2" hidden><b>Still not fixed</b><p>You say yes. riseOS offers to open a ticket.</p></div><div class="step" data-i="0" data-b="3" hidden><b>Create a ticket</b><p>Tap Create a ticket. riseOS creates the ticket from your chat, writes the description and assigns a ticket ID.</p></div><div class="step" data-i="0" data-b="4" hidden><b>Ticket created</b><p>The confirmation shows the ticket ID, so it’s easy to find and reference.</p></div><div class="step" data-i="0" data-b="5" hidden><b>Find it under Tickets</b><p>Close the chat and the ticket is waiting under Tickets, bottom left.</p></div><div class="step" data-i="0" data-b="6" hidden><b>Already assigned</b><p>Open it. The description is written from your conversation, and automation has assigned a resolution owner: Greg Smith.</p></div><div class="step" data-i="0" data-b="7" hidden><b>Add a voice note</b><p>Need to explain more? Record a voice note in one tap and talk it through.</p></div><div class="step" data-i="0" data-b="8" hidden><b>Or a screen recording</b><p>One tap records your screen, so we see exactly what you see.</p></div><div class="step" data-i="0" data-b="9" hidden><b>One thread per ticket</b><p>Send it. Each ticket reads like a chat.</p></div><div class="step" data-i="0" data-b="10" hidden><b>Replies arrive like a text</b><p>With your phone in your pocket, a reply comes in as a notification: Help Center, Alex Moreno replied to Ticket #4807.</p></div><div class="step" data-i="0" data-b="11" hidden><b>Straight to what’s new</b><p>Tap it and you land on that ticket at the latest reply. You can even see when support is typing.</p></div><div class="step" data-i="0" data-b="12" hidden><b>With 3rd party</b><p>The status at the top shows when we’re waiting on an outside vendor.</p></div><div class="step" data-i="0" data-b="13" hidden><b>Every change is logged</b><p>Each status change is recorded in the thread, so the history is always clear.</p></div><div class="step" data-i="0" data-b="14" hidden><b>Resolved</b><p>You know the moment it’s fixed. If the problem comes back, reopen the ticket with one tap.</p></div></div></div>
+</div>
+</article>
+</section><section class="part" id="beta">
+  <div class="parthead prose"><span class="pn">Part 2</span><h2>In Beta This Quarter</h2><p>Four things being tested on the floor right now. Screens are from the beta and some are mock-ups, so details will change before they ship.</p></div>
+  <article class="feature" id="recommendation-engine">
+  <header class="prose">
+    <div class="cat"><i data-lucide="sparkles" class="ic "></i><span>Health screening</span><span class="pill p-beta">In beta</span></div>
+    <h3>Program Recommendation Engine</h3>
+    <p class="lead">The health screening goes in. One recommended plan comes out.</p>
+    <p>Today every coach builds the plan in their head, making dozens of decisions by feel. The Program Recommendation Engine turns the health screening into one recommended program, so every coach makes the same call.</p><p>It’s in beta with Emily at Coconut Creek. The screens are mock-ups, and details will change.</p>
+  </header>
+  <div class="walk" id="recommendation-engine-walk" data-slides="18,19,20,21,22" data-x="0" style="--ar:1.7778">
+  <div class="screen"><div class="poster"><i data-lucide="play" class="ic "></i><span>Loading the walkthrough</span></div>
+    <div class="ctl">
+      <button type="button" class="nav prev" aria-label="Previous step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+      <div class="prog"><span class="eb">See How It Works</span><span class="cnt">Step <b>1</b> of 19</span></div>
+      <button type="button" class="nav next" aria-label="Next step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+    <div class="track"><i></i></div>
+  </div>
+  <div class="bar2"><div class="stepcard" aria-live="polite"><div class="step" data-i="0" data-b="0"><span class="ctx">How it works</span><b>Screening in, plan out</b><p>The engine connects the health screening to the program the client is offered.</p></div><div class="step" data-i="0" data-b="1" hidden><span class="ctx">How it works</span><b>What goes in</b><p>The health screening: the client’s top goal, vitality and symptom scores, and any contraindications.</p></div><div class="step" data-i="0" data-b="2" hidden><span class="ctx">How it works</span><b>What comes out</b><p>riseOS weighs all of it and builds one plan. Here, it’s the Pain Reduction Program, three times a week for 12 weeks, with the services in the right order.</p></div><div class="step" data-i="1" data-b="0" hidden><span class="ctx">The plan on screen</span><b>The screening feeds the plan</b><p>If YouTube can predict what you want to watch next, RISE can predict the right program. The health screening flows straight into the plan.</p></div><div class="step" data-i="1" data-b="1" hidden><span class="ctx">The plan on screen</span><b>One recommended program</b><p>Built for the client’s goal: services and sessions, how often, how long, total visits and price.</p></div><div class="step" data-i="1" data-b="2" hidden><span class="ctx">The plan on screen</span><b>Matched to the client’s answers</b><p>The engine matches the client’s goal, symptoms and vitality index against every service we offer.</p></div><div class="step" data-i="1" data-b="3" hidden><span class="ctx">The plan on screen</span><b>Strength and results</b><p>The Strength bar shows how strong the plan is, and the results line backs it up with data from clients across RISE. The screen makes the call, so every coach makes the same one.</p></div><div class="step" data-i="2" data-b="0" hidden><span class="ctx">Explain every service</span><b>Tap a service</b><p>Tap any service in the plan to explain it on the spot.</p></div><div class="step" data-i="2" data-b="1" hidden><span class="ctx">Explain every service</span><b>How it works</b><p>A plain-language explanation of what the service does.</p></div><div class="step" data-i="2" data-b="2" hidden><span class="ctx">Explain every service</span><b>What they’ll feel</b><p>What the client will experience, step by step. Every coach explains every service the same way.</p></div><div class="step" data-i="3" data-b="0" hidden><span class="ctx">Downsell</span><b>When the client pushes back</b><p>The coach taps Downsell and adjusts the plan to match the objection.</p></div><div class="step" data-i="3" data-b="1" hidden><span class="ctx">Downsell</span><b>The price</b><p>Here the plan is $108 a week.</p></div><div class="step" data-i="3" data-b="2" hidden><span class="ctx">Downsell</span><b>A shorter plan</b><p>The client can’t do 12 weeks, so the coach slides it to 8. The price recalculates, and the original price stays visible, crossed out.</p></div><div class="step" data-i="3" data-b="3" hidden><span class="ctx">Downsell</span><b>They see what they give up</b><p>Length and visits drop, and the Strength bar drops with them. A smaller plan still beats no plan.</p></div><div class="step" data-i="3" data-b="4" hidden><span class="ctx">Downsell</span><b>A floor on every plan</b><p>A plan can’t be cut below a set limit. The downsell controls are still being designed.</p></div><div class="step" data-i="4" data-b="0" hidden><span class="ctx">Engine reporting</span><b>Know what happened next</b><p>Because the plan appears on screen, we know when each client was shown a program and what happened after.</p></div><div class="step" data-i="4" data-b="1" hidden><span class="ctx">Engine reporting</span><b>Walked in, then shown a plan</b><p>In October, 120 clients walked in for a health screening. 96 of them (80%) were shown a plan. The other 24 left without ever seeing one.</p></div><div class="step" data-i="4" data-b="2" hidden><span class="ctx">Engine reporting</span><b>Bought, downsold or walked out</b><p>Of the 96 shown a plan, 41 (43%) bought it as recommended. The other 55 didn’t, so the coach offered a downsell: 22 of them (40%) bought a smaller plan, and 33 (60%) walked out without buying. Coaches mark why: price (14), needs to think (9) and partner decides (6).</p></div><div class="step" data-i="4" data-b="3" hidden><span class="ctx">Engine reporting</span><b>Coach by coach</b><p>The same numbers for each coach. Marcus T. shows a plan to only 62% of walk-ins, compared with 95% for Jess M., and only 41% of those walk-ins buy, compared with 66% for Jess. That’s who to coach next.</p></div></div></div>
+</div>
+</article><article class="feature" id="program-tracker">
+  <header class="prose">
+    <div class="cat"><i data-lucide="calendar-check" class="ic "></i><span>Operations</span><span class="pill p-beta">In beta</span></div>
+    <h3>Program Tracker</h3>
+    <p class="lead">See every client’s program in one place: whether they’re on track, which visits didn’t match the plan, how many visits are remaining, and what’s on the program schedule.</p>
+    <p>Programs are tracked today in a Google Sheet that isn’t connected to Zenoti, so every visit gets typed in twice. Program Tracker syncs with Zenoti and opens each client’s full program in one panel.</p><p>The panel shows whether the client is on track, how closely their visits match the plan, flags any visit that didn’t, and keeps track of every service they still need to make up.</p>
+  </header>
+  <div class="walk" id="program-tracker-walk" data-slides="25" data-x="600" style="--ar:1.2222">
+  <div class="screen"><div class="poster"><i data-lucide="play" class="ic "></i><span>Loading the walkthrough</span></div>
+    <div class="ctl">
+      <button type="button" class="nav prev" aria-label="Previous step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+      <div class="prog"><span class="eb">See How It Works</span><span class="cnt">Step <b>1</b> of 14</span></div>
+      <button type="button" class="nav next" aria-label="Next step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+    <div class="track"><i></i></div>
+  </div>
+  <div class="bar2"><div class="stepcard" aria-live="polite"><div class="step" data-i="0" data-b="0"><b>Your store at a glance</b><p>Program Tracker is synced with Zenoti, so nothing is typed twice. Four numbers across the top summarize your store: missing next visit, behind schedule, renewals in the next 30 days and active programs.</p></div><div class="step" data-i="0" data-b="1" hidden><b>The number to watch</b><p>Clients with no next visit. It should always be zero. This list shows exactly which clients have stopped booking and need a call to get them back on their program.</p></div><div class="step" data-i="0" data-b="2" hidden><b>The client panel</b><p>Click any client, like Lena Kraus, and the client’s program opens in a panel: contact details, drive time, primary goal, total spend and total visits.</p></div><div class="step" data-i="0" data-b="3" hidden><b>Up next and the summary</b><p>Up top: the client’s next visit, Visit 27, has no booking yet. Below it, the summary shows 26 of 48 visits done, 54% complete, and an On track tag.</p></div><div class="step" data-i="0" data-b="4" hidden><b>When a client falls behind</b><p>If a client isn’t keeping pace with their program, the tag turns to Off track. Elena Novak is 14 of 32 visits in and behind schedule, so the client is flagged as Off track right away.</p></div><div class="step" data-i="0" data-b="5" hidden><b>Compliance rate</b><p>Scroll down to see how closely the client follows the plan. Lena’s compliance rate is 88%: 23 of the client’s 26 visits matched what was prescribed.</p></div><div class="step" data-i="0" data-b="6" hidden><b>A flag on a modified visit</b><p>When a visit doesn’t match the plan, it gets a yellow flag in the history. Visit 3 is flagged because it was modified and no one has said why.</p></div><div class="step" data-i="0" data-b="7" hidden><b>See what changed</b><p>Click the flag. Visit 3 prescribed Cryo and Sauna, but the client completed Cryo and Compression. A Reason for change form opens.</p></div><div class="step" data-i="0" data-b="8" hidden><b>Log the reason</b><p>Pick a reason (customer preference, operational issue, equipment issue, ran out of time, staffing or other), the coach, and a short comment. Here: equipment issue, Jessica Smith, sauna down for maintenance.</p></div><div class="step" data-i="0" data-b="9" hidden><b>The flag clears</b><p>Save the reason. It’s recorded on the visit with who added it and when, and the yellow flag goes away.</p></div><div class="step" data-i="0" data-b="10" hidden><b>Services to make up</b><p>On the other side of the panel, Visits remaining shows 22 of 48 left and a tag for services still owed: 4 to make up from visits that didn’t go as planned.</p></div><div class="step" data-i="0" data-b="11" hidden><b>Add a make-up to the next visit</b><p>Open the next visit, Visit 27. Under Add a make-up, every missed service is listed with the visit it came from: PEMF from Visit 23, Compression and Red Light from Visit 1.</p></div><div class="step" data-i="0" data-b="12" hidden><b>Added</b><p>Tap Add next to PEMF. It joins Visit 27 as a make-up alongside the prescribed Cryo and Sauna.</p></div><div class="step" data-i="0" data-b="13" hidden><b>One less owed</b><p>Visit 27 now shows +1 make-up, and the tag drops to 3 to make up. Nothing missed gets lost.</p></div></div></div>
+</div>
+</article><article class="feature" id="goal-dashboard">
+  <header class="prose">
+    <div class="cat"><i data-lucide="target" class="ic "></i><span>Performance</span><span class="pill p-beta">In beta</span></div>
+    <h3>Goal Dashboard</h3>
+    <p class="lead">Set your monthly goals once, and riseOS tells you every day whether each number is on track or off track, and exactly how much you need per day to catch up.</p>
+    <p>The Goal Dashboard measures today’s numbers against the goal you set for the month: leads, arrivals, programs sold, repurchases and revenue. It shows whether you’re on pace today, not just at the end of the month. It syncs overnight, so it’s always one day behind.</p><p>Goals are set in Settings › Goal Setting. Each month starts from your last full month’s numbers, you adjust what you want to change, and the goal locks in once the month begins.</p>
+  </header>
+  <div class="walk" id="goal-dashboard-walk" data-slides="28" data-x="600" style="--ar:1.2222">
+  <div class="screen"><div class="poster"><i data-lucide="play" class="ic "></i><span>Loading the walkthrough</span></div>
+    <div class="ctl">
+      <button type="button" class="nav prev" aria-label="Previous step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+      <div class="prog"><span class="eb">See How It Works</span><span class="cnt">Step <b>1</b> of 12</span></div>
+      <button type="button" class="nav next" aria-label="Next step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+    <div class="track"><i></i></div>
+  </div>
+  <div class="bar2"><div class="stepcard" aria-live="polite"><div class="step" data-i="0" data-b="0"><b>The dashboard</b><p>Four targets across the top, a chart of the month so far and revenue to date. Every number is benchmarked against this month’s goal.</p></div><div class="step" data-i="0" data-b="1" hidden><b>On track or off track</b><p>Each card shows whether you’re on track for where you should be today. Arrivals and repurchases are on track. Leads and programs sold are off track.</p></div><div class="step" data-i="0" data-b="2" hidden><b>The daily number</b><p>Tap an Off track tag to see what it takes to catch up. Leads are 30 of 230, so you need 11 leads a day to hit 230 by October 31.</p></div><div class="step" data-i="0" data-b="3" hidden><b>Day by day</b><p>Click any card and the chart switches to it. Here, programs sold for October 1 to 12: 14 so far against a target of 42.</p></div><div class="step" data-i="0" data-b="4" hidden><b>Revenue to date</b><p>The store is at $72,000, 72% of the revenue goal. Revenue looks great, but leads are the early warning: today’s arrivals come from earlier leads, so low leads now mean fewer arrivals in a few weeks.</p></div><div class="step" data-i="0" data-b="5" hidden><b>Set the goal in Settings</b><p>Go to Settings › Goal Setting. Each year lists its months and their status. Past months are closed and October is in progress, so neither can be changed. November and December aren’t set yet.</p></div><div class="step" data-i="0" data-b="6" hidden><b>Start from real numbers</b><p>Click the pencil on November. Every input starts from your last full month: revenue $94,000, booking rate 65%, show rate 66%, close rate 43%, and your best month for each is shown for reference.</p></div><div class="step" data-i="0" data-b="7" hidden><b>Raise the revenue goal</b><p>Slide the revenue goal up 10% to $103,000. The dashboard targets update with it: 262 leads, 112 arrivals and 48 programs sold.</p></div><div class="step" data-i="0" data-b="8" hidden><b>Change what you’ll improve</b><p>Adjust any lever. Raise close rate 5% to 45.2% and you need fewer people coming in to hit the same revenue: leads drop to 251 and arrivals to 107.</p></div><div class="step" data-i="0" data-b="9" hidden><b>Save the goal</b><p>Click Save goal. November changes from Not set to Set.</p></div><div class="step" data-i="0" data-b="10" hidden><b>It locks when the month starts</b><p>Back in the list, November shows $103,000 and Set. Once November begins, it locks like October, so the target can’t move mid-month.</p></div><div class="step" data-i="0" data-b="11" hidden><b>Today vs. the goal</b><p>From then on, every morning the dashboard measures that day’s numbers against the locked goal and shows you exactly where you stand.</p></div></div></div>
+</div>
+</article><article class="feature" id="biometrics">
+  <header class="prose">
+    <div class="cat"><i data-lucide="heart-pulse" class="ic "></i><span>Biometrics</span><span class="pill p-beta">In beta</span></div>
+    <h3>Incorporating Biometrics</h3>
+    <p class="lead">Wearables add new inputs to the screening and show what happens between visits.</p>
+    <p>This is about the M in the MAP: measurability. RISE is building its own fleet of simple, screenless bands that stores own and rent to clients.</p><p>The bands add measured data to the health screening, feed the recommendation engine, and show the team how each client is doing at home.</p>
+  </header>
+  <div class="walk" id="biometrics-walk" data-slides="31,32,33,34,35,36" data-x="0" style="--ar:1.7778">
+  <div class="screen"><div class="poster"><i data-lucide="play" class="ic "></i><span>Loading the walkthrough</span></div>
+    <div class="ctl">
+      <button type="button" class="nav prev" aria-label="Previous step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+      <div class="prog"><span class="eb">See How It Works</span><span class="cnt">Step <b>1</b> of 27</span></div>
+      <button type="button" class="nav next" aria-label="Next step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+    <div class="track"><i></i></div>
+  </div>
+  <div class="bar2"><div class="stepcard" aria-live="polite"><div class="step" data-i="0" data-b="0"><span class="ctx">Our own wearables</span><b>Measurability</b><p>The next step for riseOS is measuring more of what’s happening with each client.</p></div><div class="step" data-i="0" data-b="1" hidden><span class="ctx">Our own wearables</span><b>A fleet we own</b><p>Simple, screenless bands that the store owns and rents to clients. They give us inputs we’ve never had in the screening.</p></div><div class="step" data-i="1" data-b="0" hidden><span class="ctx">New inputs at the screening</span><b>The screening you know</b><p>Top goal, vitality score and symptoms.</p></div><div class="step" data-i="1" data-b="1" hidden><span class="ctx">New inputs at the screening</span><b>A live spot check</b><p>The client wears a band while filling out the paperwork. Live heart rate and HRV appear on the screening. Here, HRV is low for the client’s age.</p></div><div class="step" data-i="1" data-b="2" hidden><span class="ctx">New inputs at the screening</span><b>The nervous system</b><p>The same spot check shows this client leaning sympathetic, in fight-or-flight, with elevated stress. The body isn’t in recovery mode.</p></div><div class="step" data-i="1" data-b="3" hidden><span class="ctx">New inputs at the screening</span><b>Captured automatically</b><p>It’s recorded while the client fills out the form. Nobody types anything in.</p></div><div class="step" data-i="2" data-b="0" hidden><span class="ctx">More inputs for the engine</span><b>The engine starts from the screening</b><p>The Program Recommendation Engine already takes in the health screening.</p></div><div class="step" data-i="2" data-b="1" hidden><span class="ctx">More inputs for the engine</span><b>What the client told us</b><p>Goal, vitality, symptoms and contraindications.</p></div><div class="step" data-i="2" data-b="2" hidden><span class="ctx">More inputs for the engine</span><b>What the band measured</b><p>HRV low for their age, and a nervous system stuck in fight-or-flight.</p></div><div class="step" data-i="2" data-b="3" hidden><span class="ctx">More inputs for the engine</span><b>A better-sequenced plan</b><p>The engine weighs all of it. The client still gets the Pain Reduction Program, but it starts with recovery, PEMF and Red Light first, because the body isn’t ready to push yet.</p></div><div class="step" data-i="2" data-b="4" hidden><span class="ctx">More inputs for the engine</span><b>Health screening now considers biometric data</b><p>Every recommendation uses what the band measured, not just what the client answered.</p></div><div class="step" data-i="3" data-b="0" hidden><span class="ctx">Wearable Management</span><b>Tracking the fleet</b><p>Wearable Management is the screen that makes the rental model work.</p></div><div class="step" data-i="3" data-b="1" hidden><span class="ctx">Wearable Management</span><b>Every device has an owner</b><p>Each device ID is tied to one client and their program, with the time it last synced.</p></div><div class="step" data-i="3" data-b="2" hidden><span class="ctx">Wearable Management</span><b>A program ends</b><p>Luis just finished a 12-week Pain Reduction Program.</p></div><div class="step" data-i="3" data-b="3" hidden><span class="ctx">Wearable Management</span><b>Back on the dock</b><p>The client returns the band. It goes on the dock, charges and shows as ready.</p></div><div class="step" data-i="3" data-b="4" hidden><span class="ctx">Wearable Management</span><b>Assigned to the next client</b><p>A new client starts a program today. The coach taps Assign, and Luis’s old band goes to them.</p></div><div class="step" data-i="3" data-b="5" hidden><span class="ctx">Wearable Management</span><b>Same device, next client</b><p>That’s the whole rental model.</p></div><div class="step" data-i="4" data-b="0" hidden><span class="ctx">Between visits</span><b>The gap</b><p>From measurability to accountability: before-and-afters don’t tell us what happens at home.</p></div><div class="step" data-i="4" data-b="1" hidden><span class="ctx">Between visits</span><b>Two readings</b><p>Today we get one reading at the start and another six weeks later.</p></div><div class="step" data-i="4" data-b="2" hidden><span class="ctx">Between visits</span><b>Progress goes unnoticed</b><p>Gradual improvements get missed, so clients aren’t sure it’s working.</p></div><div class="step" data-i="4" data-b="3" hidden><span class="ctx">Between visits</span><b>Data every day</b><p>With wearables, data comes in every day of the program.</p></div><div class="step" data-i="4" data-b="4" hidden><span class="ctx">Between visits</span><b>Small wins, as they happen</b><p>Visits become moments of positive reinforcement. Clients see progress as it happens, and that keeps them coming back.</p></div><div class="step" data-i="5" data-b="0" hidden><span class="ctx">Client Monitoring</span><b>Every client wearing a device</b><p>HRV, resting heart rate, sleep, activity and a status for each client, at a glance.</p></div><div class="step" data-i="5" data-b="1" hidden><span class="ctx">Client Monitoring</span><b>Open a client</b><p>Click into Maria.</p></div><div class="step" data-i="5" data-b="2" hidden><span class="ctx">Client Monitoring</span><b>Recovery</b><p>On the left: the client’s HRV has slid below baseline over six weeks, and resting heart rate has crept up.</p></div><div class="step" data-i="5" data-b="3" hidden><span class="ctx">Client Monitoring</span><b>Habits at home</b><p>On the right: sleep is under six hours most nights, and active minutes are down 40% since week three. The client’s services are on schedule, but what happens at home is working against the plan.</p></div><div class="step" data-i="5" data-b="4" hidden><span class="ctx">Client Monitoring</span><b>Accountability between visits</b><p>The team sees it and can act before the next visit.</p></div></div></div>
+</div>
+</article>
+</section><section class="part" id="roadmap">
+  <div class="parthead prose"><span class="pn">Part 3</span><h2>On The Roadmap</h2><p>Where riseOS is going next. These are concepts with representative data, and none has a release date yet.</p></div>
+  <article class="feature" id="client-app">
+  <header class="prose">
+    <div class="cat"><i data-lucide="smartphone" class="ic "></i><span>Client app</span><span class="pill p-plan">On the roadmap</span></div>
+    <h3>RISE Client App</h3>
+    <p class="lead">Clients see their progress, their data and their next visit.</p>
+    <p>The RISE client app puts the program in the client’s pocket: a Health Score that shows they’re getting better, real graphs from their wearable, and every visit done and booked.</p>
+  </header>
+  <div class="walk" id="client-app-walk" data-slides="39,40,41" data-x="700" style="--ar:1.1296">
+  <div class="screen"><div class="poster"><i data-lucide="play" class="ic "></i><span>Loading the walkthrough</span></div>
+    <div class="ctl">
+      <button type="button" class="nav prev" aria-label="Previous step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+      <div class="prog"><span class="eb">See How It Works</span><span class="cnt">Step <b>1</b> of 14</span></div>
+      <button type="button" class="nav next" aria-label="Next step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+    <div class="track"><i></i></div>
+  </div>
+  <div class="bar2"><div class="stepcard" aria-live="polite"><div class="step" data-i="0" data-b="0"><span class="ctx">Home</span><b>A simple greeting</b><p>The first screen a client sees, with nothing in the way.</p></div><div class="step" data-i="0" data-b="1" hidden><span class="ctx">Home</span><b>The Health Score</b><p>The focal point. 62 in week 1, 88 today. Every time the app opens, the first feeling is: I’m getting better.</p></div><div class="step" data-i="0" data-b="2" hidden><span class="ctx">Home</span><b>From the wearable</b><p>Heart rate right now, and last night’s sleep.</p></div><div class="step" data-i="0" data-b="3" hidden><span class="ctx">Home</span><b>The program</b><p>Pain Reduction, 58% done, 21 of 36 visits, with the next visit on Thursday at 5.</p></div><div class="step" data-i="0" data-b="4" hidden><span class="ctx">Home</span><b>The next visit</b><p>Tap it for the time, location and services, with buttons to reschedule or get directions.</p></div><div class="step" data-i="0" data-b="5" hidden><span class="ctx">Home</span><b>Every service, explained</b><p>Tap a service to open it full screen: how it works step by step, the science behind it, and how it’s moving this client’s own metrics.</p></div><div class="step" data-i="0" data-b="6" hidden><span class="ctx">Home</span><b>Back to Home</b><p>One tap back and the client is on Home again, a tap away from their data.</p></div><div class="step" data-i="1" data-b="0" hidden><span class="ctx">Data</span><b>The Data tab</b><p>The client’s own data, one tap from Home.</p></div><div class="step" data-i="1" data-b="1" hidden><span class="ctx">Data</span><b>Real graphs</b><p>Every vital the wearable picks up: heart rate, HRV, sleep, breathing rate and blood oxygen, for any day of the week.</p></div><div class="step" data-i="1" data-b="2" hidden><span class="ctx">Data</span><b>Why it keeps people in a program</b><p>Clients don’t have to take our word for it. They watch their numbers move.</p></div><div class="step" data-i="2" data-b="0" hidden><span class="ctx">Program</span><b>The Program tab</b><p>Every visit in the program, in one place.</p></div><div class="step" data-i="2" data-b="1" hidden><span class="ctx">Program</span><b>History</b><p>The same progress from Home, 21 of 36 visits, with every completed visit checked off below.</p></div><div class="step" data-i="2" data-b="2" hidden><span class="ctx">Program</span><b>Upcoming</b><p>The rest of the program in order. The next visit is booked and highlighted, and the week 8 progress review is ready to schedule.</p></div><div class="step" data-i="2" data-b="3" hidden><span class="ctx">Program</span><b>Clients hold themselves accountable</b><p>Clients who can see their next visit keep showing up. It’s the idea behind Program Tracker, now in the client’s hands.</p></div></div></div>
+</div>
+</article><article class="feature" id="ask-riseos">
+  <header class="prose">
+    <div class="cat"><i data-lucide="message-circle-question" class="ic "></i><span>AI assistant</span><span class="pill p-plan">On the roadmap</span></div>
+    <h3>Ask riseOS</h3>
+    <p class="lead">Ask anything about your business and get answers from your own numbers.</p>
+    <p>Ask riseOS is an AI assistant inside riseOS. Ask why a number is off, how your team compares, or what’s going on with a client, and it answers from your store’s data.</p><p>The numbers shown are representative, and there’s no date until engineering commits.</p>
+  </header>
+  <div class="walk" id="ask-riseos-walk" data-slides="43" data-x="600" style="--ar:1.2222">
+  <div class="screen"><div class="poster"><i data-lucide="play" class="ic "></i><span>Loading the walkthrough</span></div>
+    <div class="ctl">
+      <button type="button" class="nav prev" aria-label="Previous step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+      <div class="prog"><span class="eb">See How It Works</span><span class="cnt">Step <b>1</b> of 8</span></div>
+      <button type="button" class="nav next" aria-label="Next step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+    <div class="track"><i></i></div>
+  </div>
+  <div class="bar2"><div class="stepcard" aria-live="polite"><div class="step" data-i="0" data-b="0"><b>Plain questions</b><p>An assistant that answers from your store’s numbers.</p></div><div class="step" data-i="0" data-b="1" hidden><b>Ask why</b><p>Arrivals are high but programs sold are off track. You ask why.</p></div><div class="step" data-i="0" data-b="2" hidden><b>Find the real problem</b><p>Arrivals aren’t the problem. Close rate is 16% this month, 14 points below your average.</p></div><div class="step" data-i="0" data-b="3" hidden><b>Break it down</b><p>Ask for detail and see close rate by team member, and who to learn from.</p></div><div class="step" data-i="0" data-b="4" hidden><b>Ask about a client</b><p>Sally says the program isn’t working. Ask riseOS to cross-check the client’s biometrics with their visits.</p></div><div class="step" data-i="0" data-b="5" hidden><b>The answer</b><p>Sally has been coming in: 22 of 24 visits. But the client’s sleep has dropped about an hour and a half a night for two weeks, and HRV dropped with it. Recovery is the problem, not attendance. Ask the client about sleep at the next visit.</p></div><div class="step" data-i="0" data-b="6" hidden><b>Take action</b><p>It offers to add a note to the client’s profile. You say yes.</p></div><div class="step" data-i="0" data-b="7" hidden><b>Note added</b><p>From a question to an action in one tap.</p></div></div></div>
+</div>
+</article><article class="feature" id="body-scan">
+  <header class="prose">
+    <div class="cat"><i data-lucide="scan-line" class="ic "></i><span>Body scan</span><span class="pill p-plan">On the roadmap</span></div>
+    <h3>Body Scan With Prism SDK</h3>
+    <p class="lead">One standardized body scan, inside riseOS, on screens we design.</p>
+    <p>Today scans happen on different devices, live in different places, and each has its own look. Prism SDK is something we want to test: it would bring body scanning into riseOS, with one kiosk, one standardized scan and a screen we design ourselves.</p>
+  </header>
+  <div class="walk" id="body-scan-walk" data-slides="45,46,47,48,49" data-x="0" style="--ar:1.7778">
+  <div class="screen"><div class="poster"><i data-lucide="play" class="ic "></i><span>Loading the walkthrough</span></div>
+    <div class="ctl">
+      <button type="button" class="nav prev" aria-label="Previous step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+      <div class="prog"><span class="eb">See How It Works</span><span class="cnt">Step <b>1</b> of 21</span></div>
+      <button type="button" class="nav next" aria-label="Next step"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+    <div class="track"><i></i></div>
+  </div>
+  <div class="bar2"><div class="stepcard" aria-live="polite"><div class="step" data-i="0" data-b="0"><b>Scans, scattered</b><p>Different places, different devices, different looks.</p></div><div class="step" data-i="0" data-b="1" hidden><b>One kiosk, our UI</b><p>One device for every scan, standardized every time, on our own screen.</p></div><div class="step" data-i="1" data-b="0" hidden><span class="ctx">Kiosk mode</span><b>Guided set-up</b><p>The client walks up and the screen guides them: step onto the marks, arms slightly out.</p></div><div class="step" data-i="1" data-b="1" hidden><span class="ctx">Kiosk mode</span><b>A 30-second scan</b><p>Same pose, same spot, same steps in every store, so results are comparable over time.</p></div><div class="step" data-i="1" data-b="2" hidden><span class="ctx">Kiosk mode</span><b>Saved to the profile</b><p>Waist, body fat, BMI and hips go straight to the client’s profile in riseOS.</p></div><div class="step" data-i="2" data-b="0" hidden><span class="ctx">See the change</span><b>Where the results live</b><p>The scan runs through riseOS, so the results sit with everything else about the client. This is Program Tracker.</p></div><div class="step" data-i="2" data-b="1" hidden><span class="ctx">See the change</span><b>Maria’s body scans</b><p>Click into Maria. The Body scans tab shows every scan the client has done, week 0 next to week 12.</p></div><div class="step" data-i="2" data-b="2" hidden><span class="ctx">See the change</span><b>The change overlay</b><p>Green where the body got smaller, red where it grew.</p></div><div class="step" data-i="2" data-b="3" hidden><span class="ctx">See the change</span><b>Measured change</b><p>Waist down 2.4 inches, hips 1.8, thighs 1.1. Upper arms are up a little, which is a good sign in a strength phase.</p></div><div class="step" data-i="2" data-b="4" hidden><span class="ctx">See the change</span><b>The KPIs</b><p>5.3 inches total, plus weight, body fat, BMI and waist trending down scan over scan.</p></div><div class="step" data-i="2" data-b="5" hidden><span class="ctx">See the change</span><b>Change you can see</b><p>Clients see what changed, not just a number.</p></div><div class="step" data-i="3" data-b="0" hidden><span class="ctx">Designed our way</span><b>The data is ours to design</b><p>Prism provides the scan data. What clients and the team see is up to us.</p></div><div class="step" data-i="3" data-b="1" hidden><span class="ctx">Designed our way</span><b>Clinical</b><p>Every measurement, week 0 against week 12, with the change.</p></div><div class="step" data-i="3" data-b="2" hidden><span class="ctx">Designed our way</span><b>A story</b><p>Five inches lost, 70% of the way to the client’s goal, and a nudge to keep going.</p></div><div class="step" data-i="3" data-b="3" hidden><span class="ctx">Designed our way</span><b>Our own metrics</b><p>A RISE shape score, symmetry, posture and progress to goal.</p></div><div class="step" data-i="3" data-b="4" hidden><span class="ctx">Designed our way</span><b>No limits on design</b><p>We’re not tied to anyone else’s design, or to what we’ve done before.</p></div><div class="step" data-i="4" data-b="0" hidden><span class="ctx">Feeds the engine</span><b>Not on its own</b><p>Like the biometrics, the scan goes into the recommendation engine with the health screening.</p></div><div class="step" data-i="4" data-b="1" hidden><span class="ctx">Feeds the engine</span><b>What the engine knows</b><p>The goal, the screening and the biometric spot check.</p></div><div class="step" data-i="4" data-b="2" hidden><span class="ctx">Feeds the engine</span><b>Hard numbers</b><p>Prism adds BMI, body fat and real circumference measurements.</p></div><div class="step" data-i="4" data-b="3" hidden><span class="ctx">Feeds the engine</span><b>A sharper plan</b><p>Maria’s waist and body fat lead, so sculpting comes first, with recovery supporting it. The client is rescanned every four weeks to track it.</p></div><div class="step" data-i="4" data-b="4" hidden><span class="ctx">Feeds the engine</span><b>One scan, two wins</b><p>Stronger recommendations and better tracking.</p></div></div></div>
+</div>
+</article>
+</section>
+
+  <section class="close" id="wrap-up">
+    <div class="card">
+      <div class="emb"><span class="embi"><img src="assets/logo-rise-sun.png" alt=""></span><span class="wm">rise<b>OS</b></span></div>
+      <h2>One System. Every Store</h2>
+    </div>
+    <div class="more prose">
+      <h3><i data-lucide="sparkles" class="ic"></i>A Few Things To Know</h3>
+      <ul><li><i data-lucide="flask-conical" class="ic "></i><span>Landing Pages is rolling out this quarter, but card on file stays in a limited beta through Q4, with a system-wide rollout planned for Q1 2027.</span></li><li><i data-lucide="pencil-ruler" class="ic "></i><span>Program Recommendation Engine screens are mock-ups, and the downsell controls are still being designed.</span></li><li><i data-lucide="refresh-cw" class="ic "></i><span>The Goal Dashboard syncs overnight, so its numbers are always one day behind.</span></li><li><i data-lucide="map" class="ic "></i><span>Ask riseOS and Prism SDK are on the roadmap. Numbers shown are representative, and there are no release dates yet.</span></li><li><i data-lucide="database" class="ic "></i><span>Screens throughout use sample data, not real client records.</span></li></ul>
+    </div>
+    <div class="foot"><span>RISE Modern Wellness · riseOS product team</span><span>Q4 2026 release</span></div>
+  </section>
+</div></main>
+
+<script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+<script>
+(function () {
+  try { window.lucide && lucide.createIcons(); } catch (e) {}
+  var bar = document.getElementById('bar');
+  var W = [].slice.call(document.querySelectorAll('.walk'));
+
+  W.forEach(function (el) {
+    el.steps = [].slice.call(el.querySelectorAll('.step'));
+    el.trk = el.querySelector('.track i');
+    el.cntb = el.querySelector('.cnt b');
+    el.prev = el.querySelector('.nav.prev'); el.next = el.querySelector('.nav.next');
+    el.tabIndex = -1;
+    el.cur = 0;
+    el.prev.addEventListener('click', function () { if (el.cur > 0) set(el, el.cur - 1); });
+    el.next.addEventListener('click', function () { if (el.cur < el.steps.length - 1) set(el, el.cur + 1); });
+    el.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight' && el.cur < el.steps.length - 1) { e.preventDefault(); set(el, el.cur + 1); }
+      else if (e.key === 'ArrowLeft' && el.cur > 0) { e.preventDefault(); set(el, el.cur - 1); }
+    });
+    paint(el);
+  });
+
+  function beat(el) { var d = el.steps[el.cur].dataset; return { i: +d.i, b: +d.b }; }
+  function send(el, m) { if (!el.ready) return; m.rise = 'beat'; try { el.frame.contentWindow.postMessage(m, '*'); } catch (e) {} }
+  function paint(el) {
+    var k = el.cur, n = el.steps.length;
+    el.steps.forEach(function (s, i) { s.hidden = i !== k; });
+    el.trk.style.width = ((k + 1) / n * 100) + '%';
+    el.cntb.textContent = k + 1;
+    el.prev.disabled = k === 0; el.next.disabled = k === n - 1;
+  }
+  function set(el, k) { load(el); el.cur = k; paint(el); send(el, beat(el)); }
+
+  function load(el) {
+    if (el.frame) return;
+    var f = document.createElement('iframe');
+    f.src = 'player.html#s=' + el.dataset.slides + (+el.dataset.x ? '&x=' + el.dataset.x : '');
+    f.title = 'Walkthrough: ' + (el.closest('.feature').querySelector('h3').textContent);
+    f.tabIndex = -1;
+    el.querySelector('.screen').appendChild(f);
+    el.frame = f;
+  }
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { load(e.target); io.unobserve(e.target); } }); }, { rootMargin: '100% 0px 100% 0px' });
+    W.forEach(function (el) { io.observe(el); });
+  } else W.forEach(load);
+
+  window.addEventListener('message', function (e) {
+    var d = e.data; if (!d || d.rise !== 'ready') return;
+    W.forEach(function (el) {
+      if (el.frame && el.frame.contentWindow === e.source) {
+        el.ready = true; el.classList.add('live');
+        if (el.cur > 0) { var p = beat(el); p.instant = true; send(el, p); }
+      }
+    });
+  });
+
+  var tick = false;
+  function onScroll() {
+    tick = false;
+    var max = document.documentElement.scrollHeight - innerHeight;
+    bar.style.transform = 'scaleX(' + (max > 0 ? Math.min(1, scrollY / max) : 0) + ')';
+  }
+  addEventListener('scroll', function () { if (!tick) { tick = true; requestAnimationFrame(onScroll); } }, { passive: true });
+  onScroll();
+})();
+</script>
+</body></html>

@@ -93,7 +93,7 @@ That gives the candidate one bookmark and one link in every email.
 
 1. **On opt-in**, the server creates `candidates.id` (a UUID, your own key). It stores the Pipedrive `person_id` and `deal_id` on that row and sets a **signed, httpOnly session cookie** (`rise_session`). The candidate goes straight to their report with no login step.
 2. **The confirmation email** contains a magic link `https://franchise.risemodernwellness.com/r/<token>`:
-   - `token` = 32+ random bytes. Only a **hash** is stored in `portal_tokens`, with an expiry. Reusable for the long-lived "portal link" or single-use with a refresh. Your choice, see Q2.
+   - `token` = 32+ random bytes. Only a **hash** is stored in `portal_tokens`, with an expiry. The link is reusable (it's the candidate's "portal link") until it expires or you revoke it. Every new email carries a fresh one.
    - Clicking it sets the cookie and marks the email as **verified**.
 3. **Two trust levels:**
    - *Unverified* (just submitted the form): can see the territory report and book the intro call.
@@ -110,6 +110,8 @@ Sales team members viewing a candidate's portal: add `?as=<candidateId>` that on
 
 Pipedrive stages should be the **gates a human cares about**. Portal stages can be finer-grained. Keep the mapping in one config file (`lib/stages.ts`), keyed by **Pipedrive stage ID, never by name** (names get renamed).
 
+> **Placeholder.** Pipeline 2.0 already has about 11 stages. Swap the real names and IDs in here once Pipedrive access works; the mapping shape stays the same.
+
 | # | Pipeline 2.0 stage (proposed) | Portal shows | Moved by |
 |---|---|---|---|
 | 0 | Territory Report Requested | Report + book intro call | App (on opt-in) |
@@ -125,20 +127,36 @@ Pipedrive stages should be the **gates a human cares about**. Portal stages can 
 | 10 | Approval | Portal stage 9 | **Garrett / Rachel** |
 | 11 | Franchise Agreement | Portal stage 10 | Garrett; FDD 14-day clock must have passed |
 | — | Won | Portal stage 11 (Welcome to RISE) | Deal marked **Won** |
-| — | Lost / Nurture | "Thanks for being upfront" or a light nurture view | Net-worth gate, or Garrett |
+| — | Lost (with a lost reason) | Net-worth gate: "Thanks for being upfront". Other reasons: a light "welcome back any time" view with a button to request a new report | App (net-worth gate) or Garrett |
 
 Two kinds of stage advance:
 
 - **Self-serve gates:** the candidate finishes all required steps, and the app moves the deal stage through the API.
 - **Human gates** (financial verification, approval, agreement): the app sets a field such as `Ready for review = yes` and creates a Pipedrive activity for Garrett. Garrett moves the stage, and the webhook unlocks the next portal stage.
 
-### 5.2 Custom fields to create on the Deal
+### 5.2 Deal lifecycle rules (decided)
+
+Deals are **time windows**. The person is permanent; each deal is one attempt to move that person through the pipeline.
+
+1. **Re-submission while a deal is open** (status = open, in Pipeline 2.0): **don't create a deal.** Add a note to the open deal ("Re-requested report for <territory> on <date>"). Update the `Territory` field only if Garrett hasn't locked a territory yet.
+2. **Re-submission when every earlier deal is won or lost:** **create a new open deal** for the same person, in the first stage. Example: opted in January 2027, went quiet, marked lost in March, comes back in September. That's a new deal. The old deal stays in history.
+3. **Net-worth gate fails:** mark the deal **Lost** right away with the lost reason **"Below net worth minimum"**. No nurture stage. The person stays a contact, and nurture email is segmented on person + lost reason + last stage reached.
+4. **No action in the first stage within your window:** Garrett marks it Lost (reason "No response"). Optional automation: set Pipedrive's **rotting** days on each stage so stale deals turn red, and a nightly cron can auto-lose deals left rotting for N more days.
+
+Lost reasons must be a **fixed list** (Pipedrive → Settings → Company settings → Lost reasons, with free-form text turned off). Free-text reasons can't be segmented. Suggested starting list: `Below net worth minimum`, `Below liquidity minimum`, `No response`, `Not ready yet (timing)`, `Chose another brand`, `Territory unavailable`, `Not a fit`.
+
+**What this means for the portal:**
+- A candidate's portal always follows their **newest deal**. History is kept in `candidate_deals`.
+- Step progress is stored **per deal**, so a returning candidate starts a fresh journey. Legal records (FDD receipts) are kept forever. If a returning candidate's FDD receipt is for an older FDD version, they get the current one again and the 14-day clock restarts.
+- A person with a **won** deal who opts in again (for example, a second unit) still gets a new deal under rule 2. The app also flags it for Garrett, because an existing owner shouldn't go through the stranger funnel.
+
+### 5.3 Custom fields to create on the Deal
 
 `Portal ID` (candidate UUID), `Territory` (text), `Territory ZIPs`, `Territory status` (open/sold), `Lead source`, `UTM source/medium/campaign`, `Click ID` (fbclid/gclid), `Months looking`, `Owned business before` and `Business name`, `Net worth band`, `Liquid capital band`, `Funding plan`, `Target open`, `FDD sent at`, `FDD receipt signed at`, `Portal last active`, `Portal stage progress` (e.g. "Stage 3 · 2/3 steps"), `Ready for review` (yes/no).
 
 Put **stable facts and milestones** in fields. Put **narrative answers** ("What would owning a RISE location change for you?") in a **Pipedrive note** on the deal so Garrett reads them in context.
 
-### 5.3 Opt-in → person + deal (idempotent)
+### 5.4 Opt-in → person + deal (idempotent)
 
 ```mermaid
 sequenceDiagram
@@ -158,10 +176,10 @@ sequenceDiagram
     J->>P: create person
   end
   J->>P: find OPEN deal for person in Pipeline 2.0
-  alt none
-    J->>P: create deal (Pipeline 2.0, stage "Territory Report Requested", custom fields)
-  else exists
+  alt open deal exists
     J->>P: add note "Re-requested report for <territory>"
+  else none open (all earlier deals won/lost, or first time)
+    J->>P: create NEW deal (Pipeline 2.0, first stage, custom fields)
   end
   J->>D: save person_id, deal_id
   J->>J: build territory data (Census, Mapbox, Places), render PDF
@@ -176,7 +194,7 @@ The report page shows the loading animation from the mockup ("Finding Katy, TX �
 - Look up the stage and custom-field IDs once at setup and commit them to config.
 - Pipedrive uses a daily token budget for rate limits. The DB mirror exists so that page views cost zero Pipedrive calls.
 
-### 5.4 Pipedrive → app (webhook)
+### 5.5 Pipedrive → app (webhook)
 
 - Register a webhook on deal changes pointing to `/api/webhooks/pipedrive`, protected with HTTP basic auth (a secret in env).
 - The handler upserts `deal_mirror (deal_id, stage_id, status, updated_at)` and ignores events older than what it already has.
@@ -206,7 +224,7 @@ sequenceDiagram
   B->>A: POST prep answers (months looking, owned business, net worth)
   A->>D: save answers, push to deal fields (job)
   alt net worth < $720K
-    A-->>B: gate screen; deal → Lost or Nurture (see Q4)
+    A-->>B: gate screen; deal → Lost, reason "Below net worth minimum"
   else qualified
     B->>A: POST /api/booking/confirm {slot}
     A->>C: POST /v2/bookings (attendee + metadata {candidateId, dealId})
@@ -246,7 +264,7 @@ sequenceDiagram
 
 | Endpoint | Auth | Purpose |
 |---|---|---|
-| `POST /api/lead` | Turnstile + rate limit | Opt-in (see §5.3) |
+| `POST /api/lead` | Turnstile + rate limit | Opt-in (see §5.4) |
 | `GET /api/territory/search?q=` | public, rate limited | City/ZIP autocomplete ("Big cities hold many territories…") |
 | `GET /api/booking/slots` | session | Cal.com availability |
 | `POST /api/booking/prep` | session | Prep answers + gate |
@@ -312,16 +330,18 @@ Keep a typed `track()` helper in `lib/track.ts` so every event name and its prop
 
 ```text
 candidates        id uuid pk, email unique, first_name, last_name, phone,
-                  pipedrive_person_id, pipedrive_deal_id, territory_id,
+                  pipedrive_person_id, current_deal_id, territory_id,
                   territory_label, attribution jsonb, email_verified_at,
                   created_at, last_active_at
+candidate_deals   deal_id pk, candidate_id, opened_at, closed_at,
+                  status ('open'|'won'|'lost'), lost_reason   -- one row per deal
 portal_tokens     id, candidate_id, token_hash, purpose, expires_at, used_at
 deal_mirror       deal_id pk, candidate_id, pipeline_id, stage_id, status,
                   pd_updated_at, synced_at
 bookings          cal_uid pk, candidate_id, event_type, start_at, end_at, tz,
                   status, pipedrive_activity_id, meta jsonb
-progress          candidate_id, stage_key, step_key, status, pct,
-                  completed_at          (pk: candidate_id+stage_key+step_key)
+progress          deal_id, stage_key, step_key, status, pct,
+                  completed_at          (pk: deal_id+stage_key+step_key)
 form_submissions  id, candidate_id, form_key, form_version, payload jsonb,
                   submitted_at, ip, user_agent      -- append-only
 legal_records     id, candidate_id, kind ('fdd_receipt'|'agreement'),
@@ -354,7 +374,7 @@ The mockups already carry the right disclaimers. These are the system-level piec
 ## 12. Repo + deploy setup
 
 ```text
-rise-franchise-portal/          (Next.js, TypeScript, Tailwind using RISE design tokens)
+rise-franchise-portal/          NEW repo (decided). (Next.js, TypeScript, Tailwind using RISE design tokens)
   app/
     page.tsx                    landing (from Main.dc.html)
     portal/page.tsx             report / booked / portal views

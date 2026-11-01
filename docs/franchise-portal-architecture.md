@@ -145,7 +145,11 @@ Deals are **time windows**. The person is permanent; each deal is one attempt to
    - **Clock:** starts when the deal enters the first stage. That's the opt-in for a new deal; for a cancelled booking that sends the deal back, it's the day it moved back. The `stage_change_time` Pipedrive keeps for each deal is the source.
    - **Enforced by** a nightly cron (`/api/cron/stale-deals`). It finds open Pipeline 2.0 deals in the first stage for ≥14 days with no future booking in `bookings`, marks each Lost through the API, and logs it. Any booking stops the clock, because the booking webhook moves the deal out of the first stage.
    - **Pipedrive rotting** on the first stage set to **10 days**, so Garrett sees the deal turn red before the cron closes it.
-   - **Reminder emails** before it closes (suggested day 2, 5, 10 and 13: "Your territory report is ready, pick a time with Garrett"), each with the portal link. Every one is a chance to book before the deal is lost.
+   - **Value-first follow-up emails** during the window (decided). Each one teaches something useful first, and the call to book comes second. Suggested days 2, 5, 10 and 13. Example topics: what their territory's numbers mean, Rachel's story, how a RISE location ramps, what really happens on the intro call.
+     - **Every email links to the same place:** the candidate's portal, scrolled to the booking section of their territory report. That's the exact screen they saw right after opting in. The link is `/r/<token>?to=book&src=email-<n>`. The magic link logs them in, `to=book` scrolls to the booking calendar, and `src` records which email got the click.
+     - **Sending stops** the moment a call is booked or the deal closes. The send job checks the deal stage right before each send.
+     - **Tracking:** `email_sent`, `email_open`, `email_click {n}` go into `events`. A booking made after an email click is credited to that email.
+     - **Where it runs:** a scheduled job in the app (Inngest/Vercel Queues, sending through Resend/Postmark), so the stop-on-booking check uses live portal data. The email copy lives in `content/emails/`.
    - A lost candidate who opts in again later gets a new deal (rule 2).
 
 Lost reasons must be a **fixed list** (Pipedrive → Settings → Company settings → Lost reasons, with free-form text turned off). Free-text reasons can't be segmented. Suggested starting list: `Below net worth minimum`, `Below liquidity minimum`, `No response`, `Not ready yet (timing)`, `Chose another brand`, `Territory unavailable`, `Not a fit`.

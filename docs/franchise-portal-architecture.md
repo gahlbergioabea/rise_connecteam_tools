@@ -141,7 +141,12 @@ Deals are **time windows**. The person is permanent; each deal is one attempt to
 1. **Re-submission while a deal is open** (status = open, in Pipeline 2.0): **don't create a deal.** Add a note to the open deal ("Re-requested report for <territory> on <date>"). Update the `Territory` field only if Garrett hasn't locked a territory yet.
 2. **Re-submission when every earlier deal is won or lost:** **create a new open deal** for the same person, in the first stage. Example: opted in January 2027, went quiet, marked lost in March, comes back in September. That's a new deal. The old deal stays in history.
 3. **Net-worth gate fails:** mark the deal **Lost** right away with the lost reason **"Below net worth minimum"**. No nurture stage. The person stays a contact, and nurture email is segmented on person + lost reason + last stage reached.
-4. **No action in the first stage within your window:** Garrett marks it Lost (reason "No response"). Optional automation: set Pipedrive's **rotting** days on each stage so stale deals turn red, and a nightly cron can auto-lose deals left rotting for N more days.
+4. **14-day booking window (decided):** if a deal has been in the first stage (Territory Report Requested) for **14 days** without an intro call booked, it's marked **Lost**, reason **"No response"**.
+   - **Clock:** starts when the deal enters the first stage. That's the opt-in for a new deal; for a cancelled booking that sends the deal back, it's the day it moved back. The `stage_change_time` Pipedrive keeps for each deal is the source.
+   - **Enforced by** a nightly cron (`/api/cron/stale-deals`). It finds open Pipeline 2.0 deals in the first stage for ≥14 days with no future booking in `bookings`, marks each Lost through the API, and logs it. Any booking stops the clock, because the booking webhook moves the deal out of the first stage.
+   - **Pipedrive rotting** on the first stage set to **10 days**, so Garrett sees the deal turn red before the cron closes it.
+   - **Reminder emails** before it closes (suggested day 2, 5, 10 and 13: "Your territory report is ready, pick a time with Garrett"), each with the portal link. Every one is a chance to book before the deal is lost.
+   - A lost candidate who opts in again later gets a new deal (rule 2).
 
 Lost reasons must be a **fixed list** (Pipedrive → Settings → Company settings → Lost reasons, with free-form text turned off). Free-text reasons can't be segmented. Suggested starting list: `Below net worth minimum`, `Below liquidity minimum`, `No response`, `Not ready yet (timing)`, `Chose another brand`, `Territory unavailable`, `Not a fit`.
 
@@ -276,6 +281,7 @@ sequenceDiagram
 | `POST /api/auth/link` | public, rate limited | Email me my portal link |
 | `POST /api/webhooks/pipedrive` · `/calcom` | basic auth / HMAC | Sync |
 | `GET /api/cron/reconcile` | Vercel Cron secret | Nightly Pipedrive drift fix |
+| `GET /api/cron/stale-deals` | Vercel Cron secret | Nightly: mark first-stage deals Lost after 14 days without a booking (§5.2) |
 
 ---
 

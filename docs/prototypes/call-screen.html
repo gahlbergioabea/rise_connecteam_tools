@@ -1,32 +1,32 @@
 <!DOCTYPE html>
 <!--
-  RISE Franchise Portal — Admin call screen prototype (/admin/meetings/[id])
-  Spec: docs/franchise-portal-architecture.md §6.2–6.3
+  RISE Franchise Portal — Admin pipeline + call panel prototype (v2)
+  Spec: docs/franchise-portal-architecture.md §4.2 (/admin/pipeline) and §6 (call screen)
+
+  v2 (Garrett, 2026-11-06): v1 was too busy. Now:
+  - The home is a pipeline board, like Pipedrive, with a Kanban ⇄ List toggle.
+  - Clicking a card opens a side panel at 66% width with a floating close button.
+  - Inside the panel: ALL INFO on the left, EVERYTHING YOU DO on the right. No third column.
 
   Borrowed from ~/Downloads/RiseOS - PROTOTYPE FILE.html:
-  - :root colour tokens + Inter font stack ............ top-level :root block
-  - Shell: progress bar, top bar, timer pill, End ...... HEALTH SCREENING OVERLAY (.hs-overlay, .hs-topbar, .hs-timer-pill, .hs-topbar-btn.end)
-  - "Start session" blur gate over the content ......... .hs-blur-gate / .hs-blurable / .hs-start-btn
-  - One step at a time: eyebrow, headline, talking-
-    point card, Previous / Next bottom bar ............. .hs-step, .hs-obj-eyebrow, .hs-obj-headline, .hs-talking-point-card, .hs-bottom-bar
-  - Yes/No buttons, choice pills, "capture + Add" chips  .hs-yn-btn, .hs-remedy-pill, .hs-remedy-add + .hs-dig-chip
-  - "I understand…" confirm button ...................... .hs-understand-btn
-  - Client card (gradient) + "Answered So Far" log ..... .hs-sidebar, .hs-client-card, .hs-answered-item (hsLogAnswer)
-  - Horizontal step pills ............................... PROGRESS REVIEW OVERLAY (.pr-step-pill), "mirrors the Health Screening intake pattern"
-  - Day strip + time slots ............................... campaign booking widget (#dayStrip, #timeSlotsScroll)
+  - :root colour tokens + Inter ............................ top-level :root block
+  - Board: .kanban-board, .kanban-col(-header/-title/-count), .lead-card, .lead-avatar,
+    .lead-card-action + urgency colours (action-urgent / -upcoming / -checked) ... Leads module
+  - Sub-bar with KPIs + .view-toggle (Kanban / Table icons) ............................. Leads module sub-bar
+  - 66% record panel sliding from the right, scrim, round white floating close at left:-58px,
+    full width + close moves inside under 900px .......................................... #clRecordPanel / .cl-float-x (Conversation Log)
+  - .panel-header / .panel-title / .panel-subtitle ...................................... shared panel header
+  - Call flow: timer pill, start-session gate, one step at a time, talking-point card,
+    Yes/No + choice pills + "capture + Add" chips, Previous / Next ...................... HEALTH SCREENING OVERLAY (.hs-*)
+  - Client card gradient + "Answered so far" items ...................................... .hs-client-card / .hs-answered-item
 
-  Changed on purpose:
-  - "Answered So Far" sits on the LEFT (RISE OS has it on the right) — Garrett's call.
-  - A third column on the right holds prep ("Their work").
-  - Layout is container-query driven, so the Phone and Meet-panel previews behave like real narrow screens.
-
-  Everything below the DEMO TOOLBAR is the screen. Content comes from MEETINGS (shaped like content/meetings.ts).
+  Content comes from MEETINGS (shaped like content/meetings.ts) and CANDIDATES (fake people).
 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Call Screen Prototype</title>
+<title>Franchise Pipeline Prototype</title>
 <style>
   @font-face { font-family:'Inter'; font-weight:400; font-display:swap; src:url('https://cdn.jsdelivr.net/fontsource/fonts/inter@5.1.0/latin-400-normal.woff2') format('woff2'); }
   @font-face { font-family:'Inter'; font-weight:500; font-display:swap; src:url('https://cdn.jsdelivr.net/fontsource/fonts/inter@5.1.0/latin-500-normal.woff2') format('woff2'); }
@@ -35,8 +35,6 @@
   @font-face { font-family:'Inter'; font-weight:800; font-display:swap; src:url('https://cdn.jsdelivr.net/fontsource/fonts/inter@5.1.0/latin-800-normal.woff2') format('woff2'); }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
-
-  /* RISE OS tokens (verbatim) */
   :root {
     --cream: #F8F4EE; --cream-2: #EFE8E0; --border: #D9CFC5;
     --terra: #C97142; --terra-light: #F59A65; --terra-bg: #FFF1E2;
@@ -47,587 +45,563 @@
   body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: #2B2420; color: var(--text-dark); display: flex; flex-direction: column; }
   button, input, select, textarea { font-family: inherit; }
 
-  /* ── DEMO TOOLBAR (prototype only, not part of the screen) ── */
-  .demo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 14px; background: #2B2420; color: #EFE8E0; font-size: 11px; flex-shrink: 0; }
+  /* ── DEMO TOOLBAR (prototype only) ── */
+  .demo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 7px 14px; background: #2B2420; color: #EFE8E0; font-size: 11px; flex-shrink: 0; }
   .demo b { color: var(--terra-light); letter-spacing: .14em; text-transform: uppercase; font-size: 9px; margin-right: 4px; }
-  .demo select, .demo button { background: #3D332C; color: #F8F4EE; border: 1px solid #5A4D43; border-radius: 7px; padding: 5px 9px; font-size: 11px; font-weight: 600; cursor: pointer; }
+  .demo button { background: #3D332C; color: #F8F4EE; border: 1px solid #5A4D43; border-radius: 7px; padding: 5px 9px; font-size: 11px; font-weight: 600; cursor: pointer; }
   .demo button.on { background: var(--terra); border-color: var(--terra); }
   .demo .sp { flex: 1; }
-  .stage { flex: 1; min-height: 0; display: flex; justify-content: center; overflow: auto; padding: 0; }
-  .stage.framed { padding: 18px 0; }
+  .stage { flex: 1; min-height: 0; display: flex; justify-content: center; }
+  .stage.framed { padding: 16px 0; }
 
-  /* ── APP SHELL (from .hs-overlay) ── */
-  .app { container-type: inline-size; container-name: app; width: 100%; height: 100%; background: var(--white); display: flex; flex-direction: column; overflow: hidden; }
-  .stage.framed .app { border-radius: 22px; box-shadow: 0 20px 60px rgba(0,0,0,.45); height: min(860px, 100%); }
-  .progress { height: 4px; background: var(--border); flex-shrink: 0; }
-  .progress-fill { height: 100%; width: 0; background: linear-gradient(90deg, #C97142, #4A9B7F); border-radius: 0 2px 2px 0; transition: width .4s ease; }
+  .app { container-type: inline-size; container-name: app; position: relative; width: 100%; height: 100%; background: var(--cream); display: flex; flex-direction: column; overflow: hidden; }
+  .stage.framed .app { width: 390px; border-radius: 22px; box-shadow: 0 20px 60px rgba(0,0,0,.45); }
 
-  .topbar { height: 52px; flex-shrink: 0; display: flex; align-items: center; gap: 10px; padding: 0 20px; border-bottom: 1px solid var(--border); background: var(--white); }
-  .back { font-size: 11px; font-weight: 600; color: var(--text-muted); background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 5px; }
-  .back:hover { color: var(--text-dark); }
-  .tb-title { margin-right: auto; display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
-  .tb-kind { font-size: 9px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--terra); white-space: nowrap; }
-  .tb-name { font-size: 13px; font-weight: 800; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .timer { font-size: 15px; font-weight: 800; color: var(--text-dark); background: var(--cream-2); border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; font-variant-numeric: tabular-nums; min-width: 72px; text-align: center; transition: background .2s, color .2s; }
+  /* ── TOP NAV + SUB-BAR (Leads module) ── */
+  .nav { height: 52px; flex-shrink: 0; background: var(--white); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; padding: 0 22px; }
+  .brand { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; letter-spacing: .22em; color: var(--terra); }
+  .brand small { font-size: 9px; letter-spacing: .16em; color: var(--text-muted); font-weight: 700; }
+  .nav-tabs { display: flex; gap: 4px; margin-left: 18px; }
+  .nav-tab { font-size: 12px; font-weight: 600; color: var(--text-muted); padding: 7px 12px; border-radius: 8px; }
+  .nav-tab.active { background: var(--cream-2); color: var(--text-dark); font-weight: 700; }
+  .nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .me { width: 30px; height: 30px; border-radius: 50%; background: var(--text-dark); color: white; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  .subbar { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px 14px; padding: 22px 24px 4px; }
+  .sub-title { font-size: 22px; font-weight: 300; color: var(--text-dark); }
+  .sub-title strong { font-weight: 800; }
+  .kpis { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+  .kpi-label { font-size: 11px; font-weight: 500; color: var(--text-faint); }
+  .kpi-value { font-size: 12px; font-weight: 800; color: var(--text-dark); }
+  .kpi-value.red { color: #C0392B; }
+  .kpi-dot { color: var(--text-faint); }
+  .sub-right { margin-left: auto; display: flex; align-items: center; gap: 8px; align-self: center; }
+  .search { height: 34px; width: 200px; border: 1px solid var(--border); border-radius: 9px; background: var(--white); padding: 0 12px; font-size: 12px; outline: none; }
+  .search:focus { border-color: var(--terra); }
+  .view-toggle { display: flex; align-items: center; background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 3px; gap: 2px; }
+  .view-toggle-btn { width: 28px; height: 28px; border-radius: 6px; border: none; background: transparent; color: var(--text-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .view-toggle-btn:hover { background: var(--cream-2); color: var(--text-dark); }
+  .view-toggle-btn.active { background: var(--cream-2); color: var(--text-dark); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+
+  /* ── KANBAN (Leads module) ── */
+  .board { flex: 1; min-height: 0; display: flex; overflow-x: auto; overflow-y: hidden; padding: 14px 24px 20px; gap: 14px; }
+  .col { flex: 0 0 264px; display: flex; flex-direction: column; min-height: 0; }
+  .col-head { display: flex; align-items: center; gap: 8px; padding: 0 2px 10px; flex-shrink: 0; }
+  .col-num { width: 24px; height: 24px; border-radius: 7px; background: var(--terra-bg); color: var(--terra); font-size: 10.5px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .col-title { font-size: 13px; font-weight: 700; flex: 1; line-height: 1.2; }
+  .col-title small { display: block; font-size: 10.5px; font-weight: 500; color: var(--text-muted); }
+  .col-count { font-size: 13px; font-weight: 800; }
+  .cards { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 4px; }
+  .col-empty { border: 1.5px dashed var(--border); border-radius: 12px; padding: 16px; text-align: center; font-size: 11px; color: var(--text-faint); }
+  .lead-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; cursor: pointer; transition: box-shadow .15s, border-color .15s; flex-shrink: 0; }
+  .lead-card:hover { box-shadow: 0 4px 16px rgba(61,51,44,.1); border-color: #D4C9BB; }
+  .lead-card.sel { border-color: var(--terra); box-shadow: 0 0 0 2px rgba(201,113,66,.25); }
+  .lc-body { padding: 13px 14px 0; display: flex; align-items: center; gap: 10px; }
+  .lead-avatar { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; background: var(--cream-2); border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: var(--text-mid); }
+  .lead-name { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lead-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+  .lc-action { display: flex; align-items: center; gap: 6px; padding: 8px 14px; margin-top: 11px; border-top: 1px solid var(--cream-2); font-size: 11.5px; font-weight: 600; }
+  .lc-action .chev { margin-left: auto; color: var(--text-faint); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .a-urgent { color: #C0392B; background: #FEF0EE; } .a-urgent .dot { background: #C0392B; }
+  .a-upcoming { color: #6B63D4; background: #F0F0FF; } .a-upcoming .dot { background: #6B63D4; }
+  .a-today { color: var(--white); background: #6B63D4; } .a-today .dot { background: var(--white); }
+  .a-checked { color: var(--green); background: var(--green-bg); } .a-checked .dot { background: var(--green); }
+  .a-normal { color: var(--text-muted); background: var(--cream); } .a-normal .dot { background: #E8A838; }
+
+  /* ── LIST VIEW ── */
+  .list { flex: 1; min-height: 0; overflow: auto; padding: 14px 24px 20px; }
+  .table { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--white); border: 1px solid #EDE4DA; border-radius: 14px; overflow: hidden; }
+  .table th { text-align: left; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); padding: 11px 14px; border-bottom: 1px solid var(--border); background: var(--white); position: sticky; top: 0; white-space: nowrap; }
+  .table td { padding: 11px 14px; font-size: 12.5px; border-bottom: 1px solid var(--cream-2); white-space: nowrap; }
+  .table tr:last-child td { border-bottom: none; }
+  .table tbody tr { cursor: pointer; }
+  .table tbody tr:hover td { background: var(--cream); }
+  .table .nm { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+  .table .nm .lead-avatar { width: 28px; height: 28px; font-size: 10px; }
+  .stage-chip { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 100px; background: var(--terra-bg); color: #8A431A; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 100px; }
+
+  /* ── 66% RECORD PANEL (#clRecordPanel) ── */
+  .scrim { position: absolute; inset: 0; z-index: 20; background: rgba(61,51,44,.26); opacity: 0; pointer-events: none; transition: opacity .25s ease; }
+  .scrim.on { opacity: 1; pointer-events: auto; }
+  .panel { position: absolute; top: 0; right: 0; bottom: 0; width: 66%; z-index: 25; background: var(--white); transform: translateX(100%); transition: transform .28s cubic-bezier(.22,1,.36,1); display: flex; flex-direction: column; }
+  .panel.open { transform: none; box-shadow: -24px 0 48px rgba(61,51,44,.12); }
+  .float-x { position: absolute; top: 14px; left: -58px; z-index: 30; width: 44px; height: 44px; border-radius: 50%; border: none; background: #fff; color: #3D332C; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 6px 18px rgba(26,23,20,.22); transition: transform 120ms, background 140ms; }
+  .float-x:hover { background: #F6F1EB; } .float-x:active { transform: scale(.96); }
+  .panel:not(.open) .float-x { display: none; }
+
+  .panel-header { background: var(--white); border-bottom: 1px solid var(--border); padding: 13px 20px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .ph-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #F59A65, #C97142); color: white; font-size: 13px; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .panel-title-block { flex: 1; min-width: 0; }
+  .panel-title { font-size: 15px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .panel-subtitle { font-size: 11px; color: var(--text-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ph-acts { display: flex; gap: 6px; }
+  .icon-btn { width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--border); background: var(--white); color: var(--text-mid); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .icon-btn:hover { background: var(--cream-2); }
+  .icon-btn.meet { background: #EAF5F0; color: #2F5D3F; border-color: rgba(74,155,127,.35); }
+  .timer { font-size: 14px; font-weight: 800; background: var(--cream-2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 11px; font-variant-numeric: tabular-nums; min-width: 66px; text-align: center; }
   .timer.warn { background: #FFF4D6; border-color: #E8C46A; color: #8A6300; }
   .timer.over { background: #FDE3E0; border-color: rgba(194,78,66,.45); color: var(--red); }
-  .tb-btn { font-size: 11px; font-weight: 600; border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; background: var(--white); color: var(--text-mid); white-space: nowrap; }
-  .tb-btn:hover { background: var(--cream-2); }
-  .tb-btn.meet { background: #EAF5F0; color: #2F5D3F; border-color: rgba(74,155,127,.35); }
-  .tb-btn.end { background: #FEF0EF; color: #C0392B; border-color: rgba(192,57,43,.2); }
+  .timer.idle { color: var(--text-faint); }
 
-  /* Mobile tabs (hidden on wide) */
-  .tabs { display: none; flex-shrink: 0; border-bottom: 1px solid var(--border); background: var(--white); }
-  .tab { flex: 1; padding: 10px 0; font-size: 12px; font-weight: 700; color: var(--text-muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; }
-  .tab.active { color: var(--terra); border-bottom-color: var(--terra); }
-  .tab .cnt { display: inline-block; min-width: 17px; padding: 1px 5px; margin-left: 4px; border-radius: 100px; background: var(--terra-bg); color: var(--terra); font-size: 10px; }
+  .ptabs { display: none; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .ptab { flex: 1; padding: 10px 0; font-size: 12px; font-weight: 700; color: var(--text-muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; }
+  .ptab.active { color: var(--terra); border-bottom-color: var(--terra); }
+  .ptab .cnt { display: inline-block; min-width: 17px; padding: 1px 5px; margin-left: 4px; border-radius: 100px; background: var(--terra-bg); color: var(--terra); font-size: 10px; }
 
-  .body { flex: 1; display: flex; overflow: hidden; min-height: 0; }
+  .pbody { flex: 1; min-height: 0; display: flex; }
 
-  /* LEFT: client card + answered so far (from .hs-sidebar) */
-  .left { width: 264px; flex-shrink: 0; background: var(--sand); border-right: 1px solid var(--border); overflow-y: auto; padding: 16px 14px; display: flex; flex-direction: column; gap: 10px; }
-  .client { background: linear-gradient(135deg, #F59A65, #C97142); border-radius: 12px; padding: 14px; color: var(--white); }
-  .client-top { display: flex; gap: 11px; align-items: center; }
-  .avatar { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.25); font-size: 15px; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .client-name { font-size: 15px; font-weight: 900; }
-  .client-meta { font-size: 10px; opacity: .85; margin-top: 1px; }
-  .pills { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
-  .cpill { background: rgba(255,255,255,.2); border-radius: 100px; padding: 3px 9px; font-size: 10px; font-weight: 600; }
-  .cpill.strong { background: rgba(255,255,255,.35); font-weight: 800; }
-  .actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 12px; }
-  .act { background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.3); color: var(--white); border-radius: 9px; padding: 7px 0 6px; font-size: 9.5px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; }
-  .act:hover { background: rgba(255,255,255,.3); }
-  .card { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
-  .card-label { font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
-  .empty { font-size: 11px; color: var(--text-faint); line-height: 1.5; }
-  .ans-group { font-size: 9px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--terra); margin: 10px 0 6px; }
-  .ans-group:first-child { margin-top: 0; }
-  .ans { background: var(--cream); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; animation: pop .25s ease; }
-  @keyframes pop { from { transform: translateX(-6px); opacity: 0; } to { transform: none; opacity: 1; } }
-  .ans-q { font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px; display: flex; justify-content: space-between; gap: 6px; }
-  .ans-a { font-size: 12px; color: var(--text-dark); font-weight: 500; line-height: 1.4; }
-  .dest { font-size: 8px; font-weight: 700; letter-spacing: .06em; padding: 1px 6px; border-radius: 100px; white-space: nowrap; }
-  .dest.fact { background: #E7EEF6; color: #3A5A80; }
-  .dest.said { background: var(--terra-bg); color: #8A431A; }
-
-  /* CENTER: step content (from .hs-content) */
-  .center { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-  .steps { display: flex; gap: 6px; padding: 12px 32px 0; overflow-x: auto; flex-shrink: 0; scrollbar-width: none; }
-  .step-pill { font-size: 11.5px; font-weight: 600; color: var(--text-muted); white-space: nowrap; padding: 6px 11px; border-radius: 9px; border: none; background: none; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-  .step-pill .n { width: 17px; height: 17px; border-radius: 50%; border: 1.5px solid var(--border); font-size: 9.5px; display: inline-flex; align-items: center; justify-content: center; }
-  .step-pill.done { color: #2F5D3F; }
-  .step-pill.done .n { background: #2F5D3F; border-color: #2F5D3F; color: white; }
-  .step-pill.active { background: var(--text-dark); color: white; font-weight: 700; }
-  .step-pill.active .n { border-color: rgba(255,255,255,.5); }
-  .content { flex: 1; overflow-y: auto; padding: 22px 32px 28px; position: relative; }
-  .gate { position: absolute; inset: 0; background: rgba(248,244,238,.78); backdrop-filter: blur(7px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; z-index: 20; transition: opacity .3s; padding: 20px; text-align: center; }
-  .gate.hidden { opacity: 0; pointer-events: none; }
-  .gate-title { font-size: 17px; font-weight: 700; }
-  .gate-sub { font-size: 12px; color: var(--text-muted); max-width: 300px; line-height: 1.6; }
-  .gate-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
-  .start-btn { background: linear-gradient(135deg, #F59A65, #C97142); color: white; border: none; border-radius: 100px; padding: 13px 28px; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 18px rgba(245,154,101,.35); display: flex; align-items: center; gap: 8px; }
-  .start-btn.alt { background: var(--white); color: var(--text-mid); border: 1.5px solid var(--border); box-shadow: none; }
-  .blurable { transition: filter .3s, opacity .3s; }
-  .app:not(.live) .blurable { filter: blur(5px); opacity: .55; pointer-events: none; user-select: none; }
-
-  .eyebrow { font-size: 9px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
-  .headline { font-size: 24px; font-weight: 800; line-height: 1.22; margin-bottom: 16px; max-width: 640px; }
-  .tp { background: var(--cream); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; max-width: 640px; }
-  .tp-label { font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--terra); margin-bottom: 6px; }
-  .tp-text { font-size: 14px; font-weight: 500; line-height: 1.55; font-style: italic; }
-  .tp-text em { font-style: normal; font-weight: 800; color: var(--terra); }
-  .field { max-width: 640px; margin-bottom: 20px; }
-  .field-label { font-size: 13px; font-weight: 700; color: var(--text-mid); margin-bottom: 9px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .hint { font-size: 11px; color: var(--text-muted); font-weight: 500; }
-  .yn { display: flex; gap: 10px; max-width: 480px; }
-  .yn-btn { flex: 1; padding: 11px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; border: 1.5px solid; transition: all .15s; }
-  .yn-yes { background: var(--green-bg); color: #2F5D3F; border-color: rgba(74,155,127,.35); }
-  .yn-yes.sel, .yn-yes:hover { background: #2F5D3F; color: white; border-color: #2F5D3F; }
-  .yn-no { background: var(--cream); color: var(--text-muted); border-color: var(--border); }
-  .yn-no.sel, .yn-no:hover { background: var(--cream-2); color: var(--text-dark); border-color: var(--text-faint); }
-  .yn-red.sel { background: #FDE3E0; color: var(--red); border-color: rgba(194,78,66,.5); }
-  .opt-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-  .opt { display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; border-radius: 100px; border: 1.5px solid var(--border); background: var(--white); font-size: 13px; font-weight: 600; color: var(--text-mid); cursor: pointer; transition: all .14s; }
-  .opt:hover { border-color: var(--text-faint); }
-  .opt.sel { background: var(--terra-bg); border-color: var(--terra); color: #8A431A; }
-  .opt .was { font-size: 9px; font-weight: 700; color: var(--terra); background: white; padding: 1px 6px; border-radius: 100px; }
-  .add-row { display: flex; gap: 8px; max-width: 560px; }
-  .add-input { flex: 1; min-width: 0; height: 44px; padding: 0 14px; border-radius: 11px; border: 1.5px dashed var(--border); background: var(--cream); font-size: 13px; color: var(--text-dark); outline: none; }
-  .add-input:focus { border-color: var(--terra); border-style: solid; background: white; }
-  .add-btn { height: 44px; padding: 0 16px; border-radius: 11px; border: none; background: var(--terra-bg); color: var(--terra); font-size: 13px; font-weight: 700; cursor: pointer; }
-  .add-btn:hover { background: var(--terra); color: white; }
-  .chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
-  .chip { display: inline-flex; align-items: center; gap: 7px; padding: 6px 7px 6px 12px; border-radius: 100px; background: var(--terra-bg); border: 1px solid #F4CCAC; color: #8A431A; font-size: 12.5px; font-weight: 600; }
-  .chip button { width: 19px; height: 19px; border: none; border-radius: 50%; background: rgba(138,67,26,.1); color: #8A431A; cursor: pointer; font-size: 11px; }
-  .confirm { display: inline-flex; align-items: center; gap: 11px; padding: 12px 18px; border-radius: 12px; border: 1.5px solid var(--border); background: white; font-size: 13.5px; font-weight: 700; color: var(--text-mid); cursor: pointer; }
-  .confirm .box { width: 21px; height: 21px; border-radius: 6px; border: 2px solid #C9BEB2; display: inline-flex; align-items: center; justify-content: center; color: transparent; font-size: 12px; }
-  .confirm.sel { border-color: #2F5D3F; background: #EAF2EC; color: #1F4A30; }
-  .confirm.sel .box { background: #2F5D3F; border-color: #2F5D3F; color: white; }
-  .notes { max-width: 640px; margin-top: 26px; padding-top: 18px; border-top: 1px solid #E4DACF; }
-  .notes textarea { width: 100%; min-height: 86px; resize: vertical; border: 1.5px solid var(--border); border-radius: 11px; padding: 11px 13px; font-size: 13px; line-height: 1.5; color: var(--text-dark); outline: none; background: white; }
-  .notes textarea:focus { border-color: var(--terra); }
-  .saved { font-size: 10px; color: var(--green); font-weight: 700; margin-left: auto; opacity: 0; transition: opacity .2s; }
-  .saved.on { opacity: 1; }
-
-  /* Wrap-up: slots, lost, result */
-  .days { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; max-width: 640px; }
-  .day { flex-shrink: 0; width: 62px; padding: 8px 0; border-radius: 11px; border: 1.5px solid var(--border); background: white; cursor: pointer; text-align: center; }
-  .day .dw { font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); }
-  .day .dn { font-size: 18px; font-weight: 800; color: var(--text-dark); }
-  .day.sel { border-color: var(--terra); background: var(--terra-bg); }
-  .times { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; margin-top: 12px; max-width: 640px; }
-  .time { padding: 10px 0; border-radius: 10px; border: 1.5px solid var(--border); background: white; font-size: 13px; font-weight: 700; color: var(--text-mid); cursor: pointer; }
-  .time:disabled { opacity: .35; cursor: default; text-decoration: line-through; }
-  .time.sel { background: var(--text-dark); color: white; border-color: var(--text-dark); }
-  .primary { margin-top: 18px; display: inline-flex; align-items: center; gap: 9px; padding: 14px 26px; border-radius: 12px; border: none; font-size: 15px; font-weight: 700; color: white; background: linear-gradient(135deg, #F59A65, #C97142); cursor: pointer; box-shadow: 0 6px 18px rgba(245,154,101,.34); }
-  .primary:disabled { opacity: .4; cursor: default; box-shadow: none; }
-  .primary.danger { background: var(--red); box-shadow: none; }
-  .select { width: 100%; max-width: 420px; height: 46px; border-radius: 11px; border: 1.5px solid var(--border); background: white; font-size: 14px; font-weight: 600; padding: 0 12px; color: var(--text-dark); }
-  .result { max-width: 640px; border-radius: 14px; padding: 18px 20px; margin-top: 18px; border: 1.5px solid; }
-  .result.good { background: #EAF2EC; border-color: rgba(47,93,63,.3); }
-  .result.bad { background: #FDF1EF; border-color: rgba(194,78,66,.3); }
-  .result.neutral { background: var(--cream); border-color: var(--border); }
-  .result h4 { font-size: 15px; font-weight: 800; margin-bottom: 6px; }
-  .result p { font-size: 12.5px; color: var(--text-mid); line-height: 1.55; }
-  .result ul { margin: 8px 0 0 16px; font-size: 12px; color: var(--text-mid); line-height: 1.7; }
-
-  .bottom { height: 60px; flex-shrink: 0; border-top: 1px solid var(--border); background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; }
-  .prev { font-size: 12px; font-weight: 600; color: var(--text-muted); background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 5px; }
-  .prev.invisible { visibility: hidden; }
-  .next { background: var(--text-dark); color: white; border: none; border-radius: 10px; padding: 11px 22px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 7px; }
-  .next.hidden { visibility: hidden; }
-  .bottom-mid { font-size: 11px; color: var(--text-faint); font-weight: 600; }
-
-  /* RIGHT: their work / prep */
-  .right { width: 300px; flex-shrink: 0; background: var(--cream); border-left: 1px solid var(--border); overflow-y: auto; padding: 16px 14px; display: flex; flex-direction: column; gap: 10px; }
-  .kv { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; padding: 5px 0; border-bottom: 1px dashed #E6DCD1; }
-  .kv:last-child { border-bottom: none; }
+  /* LEFT: info only */
+  .info { width: 42%; max-width: 380px; flex-shrink: 0; background: var(--sand); border-right: 1px solid var(--border); overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .sec-label { font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 7px; display: flex; justify-content: space-between; align-items: center; }
+  .card { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 11px 13px; }
+  .kv { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; padding: 4px 0; }
   .kv span:first-child { color: var(--text-muted); }
   .kv span:last-child { font-weight: 700; text-align: right; }
   .bar { height: 6px; border-radius: 6px; background: var(--cream-2); overflow: hidden; margin: 6px 0 2px; }
   .bar i { display: block; height: 100%; background: var(--green); border-radius: 6px; }
   .hw-q { font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin: 10px 0 3px; }
-  .hw-q:first-of-type { margin-top: 0; }
-  .hw-a { font-size: 12px; line-height: 1.5; color: var(--text-dark); background: var(--cream); border-left: 3px solid var(--terra-light); padding: 6px 9px; border-radius: 0 6px 6px 0; }
+  .hw-q:first-child { margin-top: 0; }
+  .hw-a { font-size: 12px; line-height: 1.5; background: var(--cream); border-left: 3px solid var(--terra-light); padding: 6px 9px; border-radius: 0 6px 6px 0; }
   .feed { list-style: none; }
-  .feed li { font-size: 11.5px; color: var(--text-mid); padding: 5px 0 5px 14px; position: relative; line-height: 1.4; }
-  .feed li::before { content: ''; position: absolute; left: 0; top: 10px; width: 6px; height: 6px; border-radius: 50%; background: var(--terra-light); }
-  .feed li small { color: var(--text-faint); display: block; font-size: 10px; }
-  .badge { font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 100px; }
+  .feed li { font-size: 11.5px; color: var(--text-mid); padding: 4px 0 4px 14px; position: relative; line-height: 1.4; }
+  .feed li::before { content: ''; position: absolute; left: 0; top: 9px; width: 6px; height: 6px; border-radius: 50%; background: var(--terra-light); }
+  .feed li small { color: var(--text-faint); margin-left: 4px; }
+  .badge { font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 100px; letter-spacing: .04em; }
   .badge.ok { background: var(--green-bg); color: #2F5D3F; }
-  .badge.warn { background: #FFF4D6; color: #8A6300; }
+  .badge.live { background: var(--terra-bg); color: var(--terra); }
+  .ans { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; margin-bottom: 6px; animation: pop .25s ease; }
+  @keyframes pop { from { transform: translateY(-4px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .ans-q { font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 2px; display: flex; justify-content: space-between; gap: 6px; }
+  .ans-a { font-size: 12px; font-weight: 500; line-height: 1.4; }
+  .dest { font-size: 8px; font-weight: 700; padding: 1px 6px; border-radius: 100px; white-space: nowrap; }
+  .dest.fact { background: #E7EEF6; color: #3A5A80; }
+  .dest.said { background: var(--terra-bg); color: #8A431A; }
+  .empty { font-size: 11px; color: var(--text-faint); line-height: 1.5; }
+  details.more summary { list-style: none; cursor: pointer; font-size: 11px; font-weight: 700; color: var(--terra); padding: 2px 0; }
+  details.more summary::-webkit-details-marker { display: none; }
 
-  /* ── Responsive (container queries) ── */
-  @container app (max-width: 1080px) { .right { width: 260px; } .left { width: 236px; } .steps, .content { padding-left: 24px; padding-right: 24px; } .bottom { padding: 0 24px; } }
-  @container app (max-width: 860px) {
-    .tabs { display: flex; }
-    .body { position: relative; }
-    .left, .right, .center { position: absolute; inset: 0; width: auto; border: none; display: none; }
-    .body[data-pane="answered"] .left { display: flex; }
-    .body[data-pane="call"] .center { display: flex; }
-    .body[data-pane="prep"] .right { display: flex; }
-    .topbar { padding: 0 12px; gap: 7px; }
-    .tb-btn .lbl { display: none; }
-    .back .lbl { display: none; }
-    .headline { font-size: 20px; }
-    .steps { padding: 10px 14px 0; }
-    .content { padding: 16px 16px 24px; }
-    .bottom { padding: 0 14px; }
-    .yn { max-width: none; }
+  /* RIGHT: what you do */
+  .work { flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative; }
+  .steps { display: flex; gap: 4px; padding: 12px 22px 0; overflow-x: auto; flex-shrink: 0; scrollbar-width: none; }
+  .step-pill { font-size: 11px; font-weight: 600; color: var(--text-muted); white-space: nowrap; padding: 5px 9px; border-radius: 8px; border: none; background: none; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+  .step-pill .n { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--border); font-size: 9px; display: inline-flex; align-items: center; justify-content: center; }
+  .step-pill.done { color: #2F5D3F; } .step-pill.done .n { background: #2F5D3F; border-color: #2F5D3F; color: white; }
+  .step-pill.active { background: var(--text-dark); color: white; font-weight: 700; } .step-pill.active .n { border-color: rgba(255,255,255,.5); }
+  .content { flex: 1; overflow-y: auto; padding: 18px 22px 24px; position: relative; }
+  .gate { position: absolute; inset: 0; background: rgba(255,255,255,.8); backdrop-filter: blur(6px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; z-index: 20; transition: opacity .3s; padding: 20px; text-align: center; }
+  .gate.hidden { opacity: 0; pointer-events: none; }
+  .gate-kind { font-size: 9px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--terra); }
+  .gate-title { font-size: 18px; font-weight: 800; }
+  .gate-sub { font-size: 12px; color: var(--text-muted); max-width: 300px; line-height: 1.6; }
+  .gate-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
+  .start-btn { background: linear-gradient(135deg, #F59A65, #C97142); color: white; border: none; border-radius: 100px; padding: 12px 24px; font-size: 13.5px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 18px rgba(245,154,101,.35); display: flex; align-items: center; gap: 8px; }
+  .start-btn.alt { background: var(--white); color: var(--text-mid); border: 1.5px solid var(--border); box-shadow: none; }
+  .panel:not(.live) .blurable { filter: blur(4px); opacity: .5; pointer-events: none; user-select: none; }
+
+  .eyebrow { font-size: 9px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; }
+  .headline { font-size: 20px; font-weight: 800; line-height: 1.25; margin-bottom: 12px; }
+  .tp { background: var(--cream); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin-bottom: 18px; }
+  .tp-text { font-size: 13.5px; font-weight: 500; line-height: 1.55; font-style: italic; }
+  .tp-text em { font-style: normal; font-weight: 800; color: var(--terra); }
+  .field { margin-bottom: 18px; }
+  .field-label { font-size: 12.5px; font-weight: 700; color: var(--text-mid); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .hint { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+  .yn { display: flex; gap: 8px; }
+  .yn-btn { flex: 1; padding: 10px 12px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; border: 1.5px solid; transition: all .15s; }
+  .yn-yes { background: var(--green-bg); color: #2F5D3F; border-color: rgba(74,155,127,.35); }
+  .yn-yes.sel, .yn-yes:hover { background: #2F5D3F; color: white; border-color: #2F5D3F; }
+  .yn-no { background: var(--cream); color: var(--text-muted); border-color: var(--border); }
+  .yn-no.sel, .yn-no:hover { background: var(--cream-2); color: var(--text-dark); border-color: var(--text-faint); }
+  .yn-red.sel { background: #FDE3E0; color: var(--red); border-color: rgba(194,78,66,.5); }
+  .opt-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+  .opt { display: inline-flex; align-items: center; gap: 6px; padding: 8px 13px; border-radius: 100px; border: 1.5px solid var(--border); background: var(--white); font-size: 12.5px; font-weight: 600; color: var(--text-mid); cursor: pointer; }
+  .opt:hover { border-color: var(--text-faint); }
+  .opt.sel { background: var(--terra-bg); border-color: var(--terra); color: #8A431A; }
+  .opt .was { font-size: 8.5px; font-weight: 700; color: var(--terra); background: white; padding: 1px 6px; border-radius: 100px; }
+  .add-row { display: flex; gap: 8px; }
+  .add-input { flex: 1; min-width: 0; height: 42px; padding: 0 13px; border-radius: 11px; border: 1.5px dashed var(--border); background: var(--cream); font-size: 13px; outline: none; }
+  .add-input:focus { border-color: var(--terra); border-style: solid; background: white; }
+  .add-btn { height: 42px; padding: 0 15px; border-radius: 11px; border: none; background: var(--terra-bg); color: var(--terra); font-size: 13px; font-weight: 700; cursor: pointer; }
+  .add-btn:hover { background: var(--terra); color: white; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+  .chip { display: inline-flex; align-items: center; gap: 7px; padding: 5px 6px 5px 11px; border-radius: 100px; background: var(--terra-bg); border: 1px solid #F4CCAC; color: #8A431A; font-size: 12px; font-weight: 600; }
+  .chip button { width: 18px; height: 18px; border: none; border-radius: 50%; background: rgba(138,67,26,.1); color: #8A431A; cursor: pointer; font-size: 10px; }
+  .confirm { display: inline-flex; align-items: center; gap: 10px; padding: 11px 16px; border-radius: 12px; border: 1.5px solid var(--border); background: white; font-size: 13px; font-weight: 700; color: var(--text-mid); cursor: pointer; }
+  .confirm .box { width: 20px; height: 20px; border-radius: 6px; border: 2px solid #C9BEB2; display: inline-flex; align-items: center; justify-content: center; color: transparent; font-size: 11px; }
+  .confirm.sel { border-color: #2F5D3F; background: #EAF2EC; color: #1F4A30; }
+  .confirm.sel .box { background: #2F5D3F; border-color: #2F5D3F; color: white; }
+  .notes { margin-top: 22px; padding-top: 16px; border-top: 1px solid #E4DACF; }
+  .notes textarea { width: 100%; min-height: 72px; resize: vertical; border: 1.5px solid var(--border); border-radius: 11px; padding: 10px 12px; font-size: 13px; line-height: 1.5; outline: none; }
+  .notes textarea:focus { border-color: var(--terra); }
+  .saved { font-size: 10px; color: var(--green); font-weight: 700; margin-left: auto; opacity: 0; transition: opacity .2s; }
+  .saved.on { opacity: 1; }
+  .days { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 4px; }
+  .day { flex-shrink: 0; width: 58px; padding: 7px 0; border-radius: 11px; border: 1.5px solid var(--border); background: white; cursor: pointer; text-align: center; }
+  .day .dw { font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); }
+  .day .dn { font-size: 17px; font-weight: 800; }
+  .day.sel { border-color: var(--terra); background: var(--terra-bg); }
+  .times { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 7px; margin-top: 10px; }
+  .time { padding: 9px 0; border-radius: 10px; border: 1.5px solid var(--border); background: white; font-size: 12.5px; font-weight: 700; color: var(--text-mid); cursor: pointer; }
+  .time:disabled { opacity: .35; cursor: default; text-decoration: line-through; }
+  .time.sel { background: var(--text-dark); color: white; border-color: var(--text-dark); }
+  .primary { margin-top: 16px; display: inline-flex; align-items: center; gap: 9px; padding: 13px 22px; border-radius: 12px; border: none; font-size: 14px; font-weight: 700; color: white; background: linear-gradient(135deg, #F59A65, #C97142); cursor: pointer; box-shadow: 0 6px 18px rgba(245,154,101,.34); }
+  .primary:disabled { opacity: .4; cursor: default; box-shadow: none; }
+  .primary.danger { background: var(--red); box-shadow: none; }
+  .select { width: 100%; height: 44px; border-radius: 11px; border: 1.5px solid var(--border); background: white; font-size: 13.5px; font-weight: 600; padding: 0 12px; }
+  .result { border-radius: 14px; padding: 15px 17px; margin-top: 16px; border: 1.5px solid; }
+  .result.good { background: #EAF2EC; border-color: rgba(47,93,63,.3); }
+  .result.bad { background: #FDF1EF; border-color: rgba(194,78,66,.3); }
+  .result.neutral { background: var(--cream); border-color: var(--border); }
+  .result h4 { font-size: 14px; font-weight: 800; margin-bottom: 5px; }
+  .result p, .result li { font-size: 12.5px; color: var(--text-mid); line-height: 1.55; }
+  .result ul { margin: 6px 0 0 16px; }
+  .bottom { height: 56px; flex-shrink: 0; border-top: 1px solid var(--border); background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; }
+  .prev { font-size: 12px; font-weight: 600; color: var(--text-muted); background: none; border: none; cursor: pointer; }
+  .prev.invisible, .next.invisible { visibility: hidden; }
+  .next { background: var(--text-dark); color: white; border: none; border-radius: 10px; padding: 10px 20px; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .bottom-mid { font-size: 11px; color: var(--text-faint); font-weight: 600; }
+
+  /* ── Narrow (phone, Meet side panel) ── */
+  @container app (max-width: 900px) {
+    .panel { width: 100%; }
+    .float-x { left: auto; right: 12px; top: 10px; width: 36px; height: 36px; box-shadow: 0 3px 10px rgba(26,23,20,.18); }
+    .panel-header { padding: 10px 56px 10px 14px; }
+    .ph-acts .icon-btn:not(.meet) { display: none; }
+    .ptabs { display: flex; }
+    .pbody { position: relative; }
+    .info, .work { position: absolute; inset: 0; width: auto; max-width: none; border: none; display: none; }
+    .pbody[data-pane="info"] .info { display: flex; }
+    .pbody[data-pane="work"] .work { display: flex; }
+    .nav-tabs, .search { display: none; }
+    .subbar { padding: 16px 16px 4px; }
+    .board, .list { padding-left: 16px; padding-right: 16px; }
+    .col { flex-basis: 84%; }
+    .steps { padding: 10px 14px 0; } .content { padding: 14px 16px 20px; } .bottom { padding: 0 14px; }
   }
-  .client-mini { display: flex; align-items: center; gap: 10px; background: linear-gradient(135deg, #F59A65, #C97142); color: white; border-radius: 12px; padding: 10px 12px; margin-bottom: 16px; }
-  .client-mini .avatar { width: 32px; height: 32px; font-size: 12px; }
-  .client-mini .acts { margin-left: auto; display: flex; gap: 6px; }
-  .client-mini .act { width: 34px; padding: 6px 0; }
-  @container app (min-width: 861px) { .client-mini { display: none; } }
 </style>
 </head>
 <body>
 
-<!-- ══ DEMO TOOLBAR (prototype only) ══ -->
 <div class="demo">
   <b>Prototype</b>
-  <label>Meeting <select id="kindSel"></select></label>
-  <span style="margin-left:6px">View</span>
   <button data-view="full" class="on">Laptop</button>
   <button data-view="phone">Phone</button>
-  <button data-view="panel">Meet side panel</button>
   <span class="sp"></span>
   <button id="jumpWarn">Timer → 4:30 left</button>
   <button id="jumpOver">Timer → over</button>
-  <button id="resetBtn">Reset</button>
 </div>
 
 <div class="stage" id="stage">
 <div class="app" id="app">
-  <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
 
-  <!-- HEADER (fixed region 1) + TIMER (fixed region 2) -->
-  <div class="topbar">
-    <button class="back" title="Back to pipeline">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-      <span class="lbl">Today</span>
-    </button>
-    <div class="tb-title">
-      <span class="tb-kind" id="tbKind">Intro Call</span>
-      <span class="tb-name" id="tbName">Marcus Bell</span>
-    </div>
-    <div class="timer" id="timer">20:00</div>
-    <button class="tb-btn meet" title="Join Google Meet">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
-      <span class="lbl">Join Meet</span>
-    </button>
-    <button class="tb-btn end" id="endBtn" title="End call">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-      <span class="lbl">End call</span>
-    </button>
+  <!-- Top nav -->
+  <div class="nav">
+    <div class="brand">RISE <small>FRANCHISE</small></div>
+    <div class="nav-tabs"><span class="nav-tab active">Pipeline</span><span class="nav-tab">Today</span><span class="nav-tab">Settings</span></div>
+    <div class="nav-right"><div class="me">GA</div></div>
   </div>
 
-  <!-- Mobile tabs -->
-  <div class="tabs" id="tabs">
-    <button class="tab" data-pane="answered">Answered <span class="cnt" id="ansCount">0</span></button>
-    <button class="tab active" data-pane="call">Call</button>
-    <button class="tab" data-pane="prep">Prep</button>
-  </div>
-
-  <div class="body" id="body" data-pane="call">
-
-    <!-- LEFT: candidate + answered so far -->
-    <aside class="left">
-      <div class="client" id="clientCard"></div>
-      <div class="card" style="flex:1;">
-        <div class="card-label">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-          Answered so far
-        </div>
-        <div id="answered"><div class="empty">Answers appear here as you go. Blue = saved to the deal, orange = call note.</div></div>
+  <!-- Sub-bar -->
+  <div class="subbar">
+    <div class="sub-title"><strong>Pipeline</strong> 2.0</div>
+    <div class="kpis" id="kpis"></div>
+    <div class="sub-right">
+      <input class="search" id="search" placeholder="Search candidates…">
+      <div class="view-toggle">
+        <button class="view-toggle-btn active" id="vKanban" title="Kanban view"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="17" y="3" width="5" height="15" rx="1"/></svg></button>
+        <button class="view-toggle-btn" id="vList" title="List view"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
       </div>
-    </aside>
+    </div>
+  </div>
 
-    <!-- CENTER: agenda steps + capture + notes + outcome -->
-    <main class="center">
-      <div class="steps" id="steps"></div>
-      <div class="content" id="content">
-        <div class="gate" id="gate">
-          <div class="gate-title" id="gateTitle">Start Intro Call</div>
-          <div class="gate-sub">Starting begins the timer. Join on Meet, or call from the RISE franchise number (recorded).</div>
-          <div class="gate-row">
-            <button class="start-btn" id="startMeet">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
-              Join Meet &amp; start
-            </button>
-            <button class="start-btn alt" id="startPhone">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>
-              Call by phone
-            </button>
+  <div class="board" id="board"></div>
+  <div class="list" id="list" style="display:none"></div>
+
+  <!-- 66% record panel -->
+  <div class="scrim" id="scrim"></div>
+  <div class="panel" id="panel">
+    <button class="float-x" id="closeX" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <div class="panel-header">
+      <div class="ph-avatar" id="phAvatar"></div>
+      <div class="panel-title-block"><div class="panel-title" id="phName"></div><div class="panel-subtitle" id="phSub"></div></div>
+      <div class="timer idle" id="timer">20:00</div>
+      <div class="ph-acts">
+        <button class="icon-btn" title="Call"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg></button>
+        <button class="icon-btn" title="Text"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
+        <button class="icon-btn" title="Email"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/></svg></button>
+        <button class="icon-btn meet" title="Join Meet"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></button>
+      </div>
+    </div>
+    <div class="ptabs" id="ptabs">
+      <button class="ptab" data-pane="info">Info <span class="cnt" id="ansCount">0</span></button>
+      <button class="ptab active" data-pane="work">Call</button>
+    </div>
+    <div class="pbody" id="pbody" data-pane="work">
+      <aside class="info" id="info"></aside>
+      <section class="work">
+        <div class="steps" id="steps"></div>
+        <div class="content" id="content">
+          <div class="gate" id="gate">
+            <div class="gate-kind" id="gateKind"></div>
+            <div class="gate-title" id="gateTitle"></div>
+            <div class="gate-sub">Starting begins the timer. Everything you capture shows up on the left.</div>
+            <div class="gate-row">
+              <button class="start-btn" id="startMeet"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>Join Meet &amp; start</button>
+              <button class="start-btn alt" id="startPhone">Call by phone</button>
+            </div>
+          </div>
+          <div id="stepHost"></div>
+          <div class="notes blurable">
+            <div class="field-label">Call notes <span class="hint">saved as a note on this meeting</span><span class="saved" id="savedFlag">Saved</span></div>
+            <textarea id="notes" placeholder="Type or dictate…"></textarea>
           </div>
         </div>
-        <div id="stepHost"></div>
-        <div class="notes blurable">
-          <div class="field-label">Call notes <span class="hint">one box for the whole call · saved as a note on this meeting</span><span class="saved" id="savedFlag">Saved</span></div>
-          <textarea id="notes" placeholder="Type or dictate…"></textarea>
+        <div class="bottom">
+          <button class="prev invisible" id="prevBtn">‹ Previous</button>
+          <span class="bottom-mid" id="bottomMid"></span>
+          <button class="next" id="nextBtn">Next ›</button>
         </div>
-      </div>
-      <div class="bottom">
-        <button class="prev invisible" id="prevBtn">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-          Previous
-        </button>
-        <span class="bottom-mid" id="bottomMid"></span>
-        <button class="next" id="nextBtn">
-          Next
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
-      </div>
-    </main>
-
-    <!-- RIGHT: their work / prep -->
-    <aside class="right" id="prep"></aside>
+      </section>
+    </div>
   </div>
+
 </div>
 </div>
 
 <script>
-/* ═══════════════════════════════════════════════════════════
-   CONFIG — same shape as content/meetings.ts (§6.3)
-   capture.type: 'yn' | 'choice' | 'chips' | 'text' | 'confirm'
-   capture.writes: 'deals.<column>' (fact, blue) | 'meeting_captures' (said, orange)
-   ═══════════════════════════════════════════════════════════ */
+/* ═══════════ CONFIG — shaped like content/meetings.ts (§6.3) ═══════════ */
 const BANDS = ['Under $720K', '$720K–1M', '$1–2M', '$2M+'];
 const LIQUID = ['Under $150K', '$150–300K', '$300–500K', '$500K+'];
-const LOST_REASONS = ['No response', 'Not a fit', 'Lost interest', 'Below net worth minimum', 'Below liquidity minimum',
-  'Not ready yet (timing)', 'Territory unavailable', 'Registration state', 'Chose another brand', 'Not a real lead'];
-const DECISIONS = {
-  advance:       { label: 'Advance', tone: 'good' },
-  not_a_fit:     { label: 'Not a fit', tone: 'bad', lostDefault: 'Not a fit' },
-  not_now:       { label: 'Not now', tone: 'bad', lostDefault: 'Not ready yet (timing)' },
-  think_it_over: { label: 'Think it over', tone: 'neutral' },
-};
+const LOST_REASONS = ['No response', 'Not a fit', 'Lost interest', 'Below net worth minimum', 'Below liquidity minimum', 'Not ready yet (timing)', 'Territory unavailable', 'Registration state', 'Chose another brand', 'Not a real lead'];
+const DECISIONS = { advance: { label: 'Advance' }, not_a_fit: { label: 'Not a fit', lost: 'Not a fit' }, not_now: { label: 'Not now', lost: 'Not ready yet (timing)' }, think_it_over: { label: 'Think it over' } };
+
+const STAGES = [
+  ['territory_check', 'Territory Check', null], ['intro_booked', 'Intro Call Booked', 'intro'], ['m1_booked', 'Meeting 1 Booked', 'm1', 'Business Overview'],
+  ['m2_booked', 'Meeting 2 Booked', 'm2', 'Marketing'], ['m3_booked', 'Meeting 3 Booked', 'm3', 'Sales'], ['m4_booked', 'Meeting 4 Booked', 'm4', 'Delivery · FDD'],
+  ['m5_booked', 'Meeting 5 Booked', 'm5', 'Leadership'], ['territory_booked', 'Territory Meeting Booked', 'territory'], ['preconf_booked', 'Pre-Confirmation Booked', 'preconf'],
+  ['confday_booked', 'Confirmation Day Booked', 'confday'], ['preparing_award', 'Preparing To Accept Award', null], ['agreement_signed', 'Franchise Agreement Signed', null], ['fee_collected', 'Franchise Fee Collected', null],
+];
 
 const MEETINGS = {
-  intro: {
-    label: 'Intro Call', lengthMin: 20, homework: null, nextKind: 'm1', stalledAfterDays: 5,
-    decisions: ['advance', 'not_a_fit', 'not_now', 'think_it_over'],
-    agenda: [
-      { key: 'why', label: 'Their why',
-        headline: 'What has you looking at owning a business right now?',
-        talk: 'Before I tell you anything about RISE, I\'d love to hear from you. What\'s got you looking at <em>{territory}</em>, and why now?',
-        captures: [
-          { key: 'why_now', label: 'Why now?', type: 'chips', placeholder: 'Capture what they say…', writes: 'meeting_captures' },
-        ] },
-      { key: 'background', label: 'Background',
-        headline: 'Get the picture of who they are today.',
-        talk: 'Tell me a bit about what you\'re doing now. You mentioned you\'ve owned <em>{business}</em> before. How did that go?',
-        captures: [
-          { key: 'background', label: 'Current work and experience', type: 'chips', placeholder: 'e.g. Ops director, 12 yrs logistics', writes: 'meeting_captures' },
-          { key: 'operator_type', label: 'Owner-operator or investor?', type: 'choice', options: ['Owner-operator', 'Semi-absentee', 'Investor only'], writes: 'deals.operator_type' },
-        ] },
-      { key: 'rise', label: 'RISE in two minutes',
-        headline: 'Give them the short version. Don\'t pitch yet.',
-        talk: 'RISE is body contouring and wellness built on three engines: marketing that fills the calendar, a sales system that converts, and delivery that keeps members coming back. The next five meetings walk you through each one.',
-        captures: [
-          { key: 'rise_reaction', label: 'Their reaction', type: 'chips', placeholder: 'What clicked, what didn\'t', writes: 'meeting_captures' },
-        ] },
-      { key: 'money', label: 'Money check',
-        headline: 'Confirm the numbers they gave at booking.',
-        talk: 'When you booked you put your net worth at <em>{reportedBand}</em>. Is that still right? And roughly how much of that is liquid?',
-        captures: [
-          { key: 'net_worth', label: 'Net worth (confirmed)', type: 'choice', options: BANDS, prefillFrom: 'reportedBand', writes: 'deals.net_worth_band' },
-          { key: 'liquid', label: 'Liquid capital', type: 'choice', options: LIQUID, writes: 'deals.liquid_capital_band' },
-          { key: 'funding', label: 'Funding plan', type: 'choice', options: ['Cash', 'SBA loan', '401(k) ROBS', 'Partner', 'Other'], writes: 'deals.funding_plan' },
-        ] },
-      { key: 'territory', label: 'Territory and timing',
-        headline: 'Lock where and when.',
-        talk: 'You looked at <em>{territory}</em>. Is that the area you want, and when would you ideally want to be open?',
-        captures: [
-          { key: 'territory_ok', label: 'Territory {territory}', type: 'yn', yes: 'Confirmed', no: 'Changed', writes: 'deals.territory_id' },
-          { key: 'target_open', label: 'Target open', type: 'choice', options: ['0–6 months', '6–12 months', '12+ months'], writes: 'deals.target_open' },
-          { key: 'decision_makers', label: 'Who else is in the decision?', type: 'choice', options: ['Just them', 'Spouse / partner', 'Business partner', 'Investor'], writes: 'deals.decision_makers' },
-        ] },
-      { key: 'questions', label: 'Questions',
-        headline: 'What questions do they have for you?',
-        talk: 'What would you need to know to feel good about taking the next step?',
-        captures: [
-          { key: 'concerns', label: 'Questions and concerns', type: 'chips', placeholder: 'Capture each one…', writes: 'meeting_captures' },
-        ] },
-    ],
-  },
-  m1: {
-    label: 'Meeting 1 · Business Overview', lengthMin: 30, homework: 'm1-v1', nextKind: 'm2', stalledAfterDays: 7,
-    decisions: ['advance', 'not_a_fit', 'not_now', 'think_it_over'],
-    agenda: [
-      { key: 'hw', label: 'Homework review',
-        headline: 'Start from what they wrote.',
-        talk: 'I read your answers. You said success looks like <em>$40K a month in owner income by year two</em>. Walk me through how you got there.',
-        captures: [
-          { key: 'hw_read', label: 'Homework reviewed with them', type: 'confirm', text: 'We talked through their homework', writes: 'meeting_captures' },
-          { key: 'hw_followups', label: 'Follow-ups from their answers', type: 'chips', placeholder: 'What you dug into…', writes: 'meeting_captures' },
-        ] },
-      { key: 'video', label: 'Video 1 takeaways',
-        headline: 'What stood out from the Business Overview video?',
-        talk: 'Of marketing, sales and delivery, which one do you feel strongest in, and which one worries you?',
-        captures: [
-          { key: 'strongest', label: 'Strongest engine', type: 'choice', options: ['Marketing', 'Sales', 'Delivery'], writes: 'meeting_captures' },
-          { key: 'worry', label: 'Biggest worry', type: 'chips', placeholder: 'What worries them…', writes: 'meeting_captures' },
-        ] },
-      { key: 'fit', label: 'Fit check',
-        headline: 'Your read on fit after Meeting 1.',
-        talk: 'Based on what you\'ve seen so far, how does this compare to what you were expecting?',
-        captures: [
-          { key: 'fit_signal', label: 'Your fit read', type: 'choice', options: ['Strong', 'Promising', 'Unsure', 'Weak'], writes: 'meeting_captures' },
-        ] },
-      { key: 'questions', label: 'Questions',
-        headline: 'Open questions before Marketing.',
-        talk: 'Anything from Video 1 or the homework you want to go deeper on?',
-        captures: [ { key: 'concerns', label: 'Questions and concerns', type: 'chips', placeholder: 'Capture each one…', writes: 'meeting_captures' } ] },
-    ],
-  },
+  intro: { label: 'Intro Call', lengthMin: 20, nextKind: 'm1', stalledAfterDays: 5, decisions: ['advance', 'not_a_fit', 'not_now', 'think_it_over'], agenda: [
+    { key: 'why', label: 'Their why', headline: 'What has them looking right now?', talk: 'Before I tell you anything about RISE, what\'s got you looking at <em>{territory}</em>, and why now?',
+      captures: [{ key: 'why_now', label: 'Why now?', type: 'chips', placeholder: 'Capture what they say…', writes: 'meeting_captures' }] },
+    { key: 'background', label: 'Background', headline: 'Who are they today?', talk: 'Tell me what you\'re doing now. You mentioned you\'ve owned <em>{business}</em>. How did that go?',
+      captures: [{ key: 'background', label: 'Work and experience', type: 'chips', placeholder: 'e.g. Ops director, 12 yrs logistics', writes: 'meeting_captures' },
+                 { key: 'operator_type', label: 'Owner-operator or investor?', type: 'choice', options: ['Owner-operator', 'Semi-absentee', 'Investor only'], writes: 'deals.operator_type' }] },
+    { key: 'rise', label: 'RISE in 2 min', headline: 'The short version. No pitch yet.', talk: 'RISE runs on three engines: marketing that fills the calendar, a sales system that converts, and delivery that keeps members. The next five meetings walk you through each one.',
+      captures: [{ key: 'rise_reaction', label: 'Their reaction', type: 'chips', placeholder: 'What clicked, what didn\'t', writes: 'meeting_captures' }] },
+    { key: 'money', label: 'Money check', headline: 'Confirm the numbers from booking.', talk: 'You put your net worth at <em>{reportedBand}</em>. Still right? And roughly how much is liquid?',
+      captures: [{ key: 'net_worth', label: 'Net worth (confirmed)', type: 'choice', options: BANDS, prefillFrom: 'reportedBand', writes: 'deals.net_worth_band' },
+                 { key: 'liquid', label: 'Liquid capital', type: 'choice', options: LIQUID, writes: 'deals.liquid_capital_band' },
+                 { key: 'funding', label: 'Funding plan', type: 'choice', options: ['Cash', 'SBA loan', '401(k) ROBS', 'Partner', 'Other'], writes: 'deals.funding_plan' }] },
+    { key: 'territory', label: 'Territory + timing', headline: 'Lock where and when.', talk: 'You looked at <em>{territory}</em>. Is that the area you want, and when would you want to be open?',
+      captures: [{ key: 'territory_ok', label: 'Territory {territory}', type: 'yn', yes: 'Confirmed', no: 'Changed', writes: 'deals.territory_id' },
+                 { key: 'target_open', label: 'Target open', type: 'choice', options: ['0–6 months', '6–12 months', '12+ months'], writes: 'deals.target_open' },
+                 { key: 'decision_makers', label: 'Who else decides?', type: 'choice', options: ['Just them', 'Spouse / partner', 'Business partner', 'Investor'], writes: 'deals.decision_makers' }] },
+    { key: 'questions', label: 'Questions', headline: 'What do they need to know?', talk: 'What would you need to know to feel good about the next step?',
+      captures: [{ key: 'concerns', label: 'Questions and concerns', type: 'chips', placeholder: 'Capture each one…', writes: 'meeting_captures' }] },
+  ] },
+  m1: { label: 'Meeting 1 · Business Overview', lengthMin: 30, nextKind: 'm2', stalledAfterDays: 7, decisions: ['advance', 'not_a_fit', 'not_now', 'think_it_over'], agenda: [
+    { key: 'hw', label: 'Homework', headline: 'Start from what they wrote.', talk: 'I read your answers. You said success looks like <em>$40K a month owner income by year two</em>. Walk me through how you got there.',
+      captures: [{ key: 'hw_read', label: 'Homework reviewed', type: 'confirm', text: 'We talked through their homework', writes: 'meeting_captures' },
+                 { key: 'hw_followups', label: 'Follow-ups from their answers', type: 'chips', placeholder: 'What you dug into…', writes: 'meeting_captures' }] },
+    { key: 'video', label: 'Video 1', headline: 'What stood out from Video 1?', talk: 'Of marketing, sales and delivery, which do you feel strongest in, and which worries you?',
+      captures: [{ key: 'strongest', label: 'Strongest engine', type: 'choice', options: ['Marketing', 'Sales', 'Delivery'], writes: 'meeting_captures' },
+                 { key: 'worry', label: 'Biggest worry', type: 'chips', placeholder: 'What worries them…', writes: 'meeting_captures' }] },
+    { key: 'fit', label: 'Fit check', headline: 'Your read on fit.', talk: 'How does this compare to what you were expecting?',
+      captures: [{ key: 'fit_signal', label: 'Your fit read', type: 'choice', options: ['Strong', 'Promising', 'Unsure', 'Weak'], writes: 'meeting_captures' }] },
+  ] },
 };
-// Stubs for the remaining meeting kinds — same layout, generic agenda
-[['m2', 'Meeting 2 · Marketing', 30, 'm3'], ['m3', 'Meeting 3 · Sales', 30, 'm4'], ['m4', 'Meeting 4 · Delivery', 30, 'm5'],
- ['m5', 'Meeting 5 · Leadership', 30, 'territory'], ['territory', 'Territory Meeting', 45, 'preconf'],
- ['preconf', 'Pre-Confirmation Meeting', 30, 'confday'], ['confday', 'Confirmation Day', 240, null]].forEach(([k, label, len, next]) => {
-  MEETINGS[k] = { label, lengthMin: len, homework: k.startsWith('m') ? k + '-v1' : null, nextKind: next, stalledAfterDays: 7,
-    decisions: next ? ['advance', 'not_a_fit', 'not_now', 'think_it_over'] : ['advance', 'not_a_fit', 'think_it_over'],
-    agenda: [
-      { key: 'hw', label: 'Homework review', headline: 'Start from what they sent in.', talk: 'Stub: talking point for ' + label + '.',
-        captures: [ { key: 'hw_followups', label: 'Follow-ups', type: 'chips', placeholder: 'Capture…', writes: 'meeting_captures' } ] },
-      { key: 'topic', label: 'Topic', headline: label.split('·').pop().trim() + ' discussion', talk: 'Stub: the core of this meeting.',
-        captures: [ { key: 'takeaways', label: 'Key takeaways', type: 'chips', placeholder: 'Capture…', writes: 'meeting_captures' } ] },
-      { key: 'questions', label: 'Questions', headline: 'Open questions', talk: 'What else do you need to know?',
-        captures: [ { key: 'concerns', label: 'Questions and concerns', type: 'chips', placeholder: 'Capture…', writes: 'meeting_captures' } ] },
-    ] };
+[['m2', 'Meeting 2 · Marketing', 30, 'm3'], ['m3', 'Meeting 3 · Sales', 30, 'm4'], ['m4', 'Meeting 4 · Delivery', 30, 'm5'], ['m5', 'Meeting 5 · Leadership', 30, 'territory'],
+ ['territory', 'Territory Meeting', 45, 'preconf'], ['preconf', 'Pre-Confirmation Meeting', 30, 'confday'], ['confday', 'Confirmation Day', 240, null]].forEach(([k, label, len, next]) => {
+  MEETINGS[k] = { label, lengthMin: len, nextKind: next, stalledAfterDays: 7, decisions: next ? ['advance', 'not_a_fit', 'not_now', 'think_it_over'] : ['advance', 'not_a_fit', 'think_it_over'], agenda: [
+    { key: 'hw', label: 'Homework', headline: 'Start from what they sent in.', talk: 'Stub talking point for ' + label + '.', captures: [{ key: 'hw_followups', label: 'Follow-ups', type: 'chips', placeholder: 'Capture…', writes: 'meeting_captures' }] },
+    { key: 'topic', label: label.split('·').pop().trim(), headline: 'The core of this meeting', talk: 'Stub.', captures: [{ key: 'takeaways', label: 'Key takeaways', type: 'chips', placeholder: 'Capture…', writes: 'meeting_captures' }] },
+  ] };
 });
 
-/* Fake candidate (not a real person) */
-const CANDIDATE = {
-  name: 'Marcus Bell', initials: 'MB', email: 'marcus.bell@example.com', phone: '(281) 555-0142',
-  territory: 'Katy, TX', territoryStatus: 'Open', stage: 'Intro Call Booked', daysInPipeline: 6,
-  reportedBand: '$1–2M', business: 'Bell Freight Services', monthsLooking: 4, source: 'Meta · "Your territory report" ad',
-};
-const PREP = {
-  intro: {
-    booking: [['Months looking', '4'], ['Owned a business', 'Yes · Bell Freight Services'], ['Net worth (reported)', '$1–2M'], ['Lead source', 'Meta ad'], ['Campaign', 'Territory report — Houston']],
-    activity: [
-      ['Opened territory report 3× (11 min total)', 'Nov 1–4'], ['Spent most time on the Data tab', 'Nov 4'],
-      ['Clicked follow-up email 2: "What your territory\'s numbers mean"', 'Nov 3'], ['Booked this call from email 2', 'Nov 3'],
-    ],
-    market: [['Population (territory)', '182,400'], ['Median household income', '$104,300'], ['Nearest RISE', '38 mi']],
-  },
-  m1: {
-    video: { title: 'Video 1 · Business Overview', pct: 94 },
-    homework: [
-      ['What vision are you hoping to achieve with RISE?', 'Build something my kids can see me run. I\'ve spent 12 years making other people\'s operations work.'],
-      ['Where do you see yourself with the brand in 5 years?', 'Three locations around west Houston, with a GM in each and me on the multi-unit side.'],
-      ['What storefront financials would make this a success?', '$40K a month owner income by year two. Payback on the first unit inside 30 months.'],
-      ['How did you derive those numbers?', 'From the sample P&L and the Item 7 range, assuming I fund 60% cash.'],
-    ],
-    activity: [['Watched Video 1 to 94%', 'Nov 8'], ['Submitted homework 26h before the call', 'Nov 9'], ['Re-opened the territory report', 'Nov 9']],
-    last: 'Intro Call (Nov 7, 22 min): strong why — wants to build for his family after 12 years in logistics ops. Net worth $1–2M confirmed, $300–500K liquid, SBA + cash. Spouse involved in the decision.',
-  },
-};
+/* ═══════════ FAKE CANDIDATES (not real people) ═══════════ */
+const C = (o) => ({ initials: o.name.split(' ').map(w => w[0]).join(''), ...o });
+const CANDIDATES = [
+  C({ id: 1, name: 'Marcus Bell', territory: 'Katy, TX', stage: 'intro_booked', days: 3, totalDays: 6, next: 'Today 10:00 AM', action: ['today', 'Intro Call · today 10:00 AM'],
+      reportedBand: '$1–2M', business: 'Bell Freight Services', monthsLooking: 4,
+      facts: [['Months looking', '4'], ['Owned a business', 'Yes · Bell Freight Services'], ['Net worth (reported)', '$1–2M'], ['Lead source', 'Meta · territory report ad']],
+      market: [['Population', '182,400'], ['Median income', '$104,300'], ['Territory', 'Open']],
+      activity: [['Opened territory report 3× (11 min)', 'Nov 1–4'], ['Clicked follow-up email 2', 'Nov 3'], ['Booked this call from email 2', 'Nov 3']] }),
+  C({ id: 2, name: 'Priya Raman', territory: 'Frisco, TX', stage: 'm1_booked', days: 4, totalDays: 12, next: 'Tomorrow 2:00 PM', action: ['checked', 'Homework in · tomorrow 2 PM'],
+      reportedBand: '$2M+', business: 'none', monthsLooking: 8,
+      facts: [['Net worth', '$2M+ (confirmed)'], ['Liquid', '$500K+'], ['Funding', 'Cash'], ['Operator', 'Semi-absentee']],
+      video: ['Video 1 · Business Overview', 94],
+      homework: [['What vision are you hoping to achieve?', 'Own something my family can step into. I\'ve built clinics for others for 15 years.'],
+                 ['Where do you see yourself in 5 years?', 'Three Frisco–McKinney units with a GM each; me on multi-unit.'],
+                 ['What storefront financials = success?', '$40K a month owner income by year two; payback inside 30 months.']],
+      last: 'Intro Call (Nov 2, 21 min): ex-clinic operations VP, wants a family business. $2M+ confirmed, cash. Husband joins Meeting 2.',
+      activity: [['Watched Video 1 to 94%', 'Nov 4'], ['Submitted homework 30h early', 'Nov 5']] }),
+  C({ id: 3, name: 'Dana Ortiz', territory: 'Boise, ID', stage: 'territory_check', days: 11, totalDays: 11, next: null, action: ['urgent', 'No booking · 11 days'] }),
+  C({ id: 4, name: 'Kevin Tran', territory: 'Scottsdale, AZ', stage: 'territory_check', days: 2, totalDays: 2, next: null, action: ['normal', 'Email 2 sent · day 2'] }),
+  C({ id: 5, name: 'Alicia Moore', territory: 'Naperville, IL', stage: 'intro_booked', days: 1, totalDays: 4, next: 'Thu 11:00 AM', action: ['upcoming', 'Intro Call · Thu 11 AM'] }),
+  C({ id: 6, name: 'Ben Castillo', territory: 'Tampa, FL', stage: 'm2_booked', days: 8, totalDays: 30, next: null, action: ['urgent', 'Held, nothing booked · 8d'] }),
+  C({ id: 7, name: 'Rachel Kim', territory: 'Bellevue, WA', stage: 'm3_booked', days: 3, totalDays: 38, next: 'Mon 9:00 AM', action: ['normal', 'Homework not started'] }),
+  C({ id: 8, name: 'Omar Haddad', territory: 'Plano, TX', stage: 'm4_booked', days: 5, totalDays: 44, next: 'Wed 1:00 PM', action: ['upcoming', 'FDD sent · day 5 of 14'] }),
+  C({ id: 9, name: 'Lauren Fisher', territory: 'Franklin, TN', stage: 'm5_booked', days: 2, totalDays: 51, next: 'Fri 3:00 PM', action: ['checked', 'Homework in · Fri 3 PM'] }),
+  C({ id: 10, name: 'Greg Powell', territory: 'Overland Park, KS', stage: 'confday_booked', days: 9, totalDays: 72, next: 'Nov 18', action: ['upcoming', 'Confirmation Day · Nov 18'] }),
+  C({ id: 11, name: 'Tasha Green', territory: 'Charlotte, NC', stage: 'preparing_award', days: 6, totalDays: 80, next: null, action: ['normal', 'Attorney review · FDD +19d'] }),
+];
+const stageOf = k => STAGES.find(s => s[0] === k);
 
-/* ═══════════ STATE ═══════════ */
-let kind = 'intro', stepIdx = 0, live = false, remaining = 0, timerId = null;
-let answers = {};        // key -> { step, label, value, writes }
-let wrap = {};           // outcome, decision, day, time, lostReason
-const M = () => MEETINGS[kind];
-const steps = () => [...M().agenda, { key: '__wrap', label: kind === 'intro' ? 'Decide and book Meeting 1' : (M().nextKind ? 'Decide and book next' : 'Decide') }];
-const fill = s => s.replace(/\{(\w+)\}/g, (_, k) => CANDIDATE[k] ?? '');
+/* ═══════════ BOARD + LIST ═══════════ */
+let view = 'kanban', q = '';
 const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const visible = () => CANDIDATES.filter(c => !q || (c.name + c.territory).toLowerCase().includes(q));
 
-/* ═══════════ RENDER ═══════════ */
-function renderClient() {
-  const c = CANDIDATE;
-  $('clientCard').innerHTML = `
-    <div class="client-top"><div class="avatar">${c.initials}</div>
-      <div><div class="client-name">${c.name}</div><div class="client-meta">${c.stage} · day ${c.daysInPipeline}</div></div></div>
-    <div class="pills"><span class="cpill strong">📍 ${c.territory}</span><span class="cpill">${c.territoryStatus}</span><span class="cpill">${c.monthsLooking} mo looking</span></div>
-    <div class="actions">${actionBtns()}</div>`;
-  $('tbName').textContent = c.name;
+function renderKpis() {
+  const open = CANDIDATES.length, stalled = CANDIDATES.filter(c => c.action[0] === 'urgent').length, booked = CANDIDATES.filter(c => c.next).length;
+  $('kpis').innerHTML = `<span class="kpi-label">Open</span><span class="kpi-value">${open}</span><span class="kpi-dot">·</span>
+    <span class="kpi-label">Meetings booked</span><span class="kpi-value">${booked}</span><span class="kpi-dot">·</span>
+    <span class="kpi-label">Stalled</span><span class="kpi-value red">${stalled}</span>`;
 }
-function actionBtns() {
-  const ico = {
-    Call: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/>',
-    Text: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
-    Email: '<rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/>',
-    Meet: '<polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/>',
-  };
-  return Object.entries(ico).map(([k, p]) => `<button class="act" title="${k}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>${k}</button>`).join('');
+function cardHTML(c) {
+  return `<div class="lead-card" data-id="${c.id}"><div class="lc-body"><div class="lead-avatar">${c.initials}</div>
+    <div style="min-width:0"><div class="lead-name">${c.name}</div><div class="lead-sub">📍 ${c.territory} · ${c.days}d in stage</div></div></div>
+    <div class="lc-action a-${c.action[0]}"><span class="dot"></span>${c.action[1]}<span class="chev">›</span></div></div>`;
+}
+function renderBoard() {
+  $('board').innerHTML = STAGES.map((s, i) => {
+    const list = visible().filter(c => c.stage === s[0]);
+    return `<div class="col"><div class="col-head"><div class="col-num">${i + 1}</div><div class="col-title">${s[1]}${s[3] ? `<small>${s[3]}</small>` : ''}</div><div class="col-count">${list.length}</div></div>
+      <div class="cards">${list.map(cardHTML).join('') || '<div class="col-empty">No one here</div>'}</div></div>`;
+  }).join('');
+  $('board').querySelectorAll('.lead-card').forEach(el => el.onclick = () => openPanel(+el.dataset.id));
+}
+function renderList() {
+  $('list').innerHTML = `<table class="table"><thead><tr><th>Candidate</th><th>Territory</th><th>Stage</th><th>Days in stage</th><th>Next meeting</th><th>Status</th></tr></thead><tbody>
+    ${visible().sort((a, b) => STAGES.findIndex(s => s[0] === b.stage) - STAGES.findIndex(s => s[0] === a.stage)).map(c => `<tr data-id="${c.id}">
+      <td><div class="nm"><div class="lead-avatar">${c.initials}</div>${c.name}</div></td><td>${c.territory}</td>
+      <td><span class="stage-chip">${stageOf(c.stage)[1]}</span></td><td>${c.days}</td><td>${c.next || '—'}</td>
+      <td><span class="pill a-${c.action[0]}"><span class="dot"></span>${c.action[1]}</span></td></tr>`).join('')}</tbody></table>`;
+  $('list').querySelectorAll('tbody tr').forEach(el => el.onclick = () => openPanel(+el.dataset.id));
+}
+function setView(v) {
+  view = v; $('vKanban').classList.toggle('active', v === 'kanban'); $('vList').classList.toggle('active', v === 'list');
+  $('board').style.display = v === 'kanban' ? 'flex' : 'none'; $('list').style.display = v === 'list' ? 'block' : 'none';
+  v === 'kanban' ? renderBoard() : renderList();
+}
+$('vKanban').onclick = () => setView('kanban'); $('vList').onclick = () => setView('list');
+$('search').oninput = e => { q = e.target.value.toLowerCase(); setView(view); };
+
+/* ═══════════ PANEL ═══════════ */
+let cand = null, kind = null, stepIdx = 0, live = false, remaining = 0, timerId = null, answers = {}, wrap = {};
+const M = () => MEETINGS[kind];
+const steps = () => [...M().agenda, { key: '__wrap', label: M().nextKind ? 'Decide + book next' : 'Decide' }];
+const fill = s => s.replace(/\{(\w+)\}/g, (_, k) => cand[k] ?? '');
+
+function openPanel(id) {
+  cand = CANDIDATES.find(c => c.id === id);
+  kind = stageOf(cand.stage)[2] || 'intro';
+  stepIdx = 0; answers = {}; wrap = {}; live = false; clearInterval(timerId);
+  remaining = M().lengthMin * 60; paintTimer();
+  $('panel').classList.remove('live'); $('gate').classList.remove('hidden'); $('notes').value = '';
+  $('phAvatar').textContent = cand.initials; $('phName').textContent = cand.name;
+  $('phSub').textContent = `${stageOf(cand.stage)[1]} · ${cand.territory} · day ${cand.totalDays}`;
+  $('gateKind').textContent = cand.next ? 'Next: ' + cand.next : 'Nothing booked yet';
+  $('gateTitle').textContent = 'Start ' + M().label;
+  document.querySelectorAll('.lead-card').forEach(el => el.classList.toggle('sel', +el.dataset.id === id));
+  renderInfo(); renderStep();
+  $('panel').classList.add('open'); $('scrim').classList.add('on');
+}
+function closePanel() { $('panel').classList.remove('open'); $('scrim').classList.remove('on'); clearInterval(timerId); document.querySelectorAll('.lead-card.sel').forEach(el => el.classList.remove('sel')); }
+$('closeX').onclick = closePanel; $('scrim').onclick = closePanel;
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
+
+/* LEFT — info only */
+function renderInfo() {
+  const c = cand, items = Object.values(answers);
+  $('ansCount').textContent = items.length;
+  let h = `<div><div class="sec-label">This call <span class="badge live">${items.length} captured</span></div>
+    ${items.length ? items.map(a => `<div class="ans"><div class="ans-q"><span>${a.label}</span><span class="dest ${a.writes.startsWith('deals.') ? 'fact' : 'said'}">${a.writes.startsWith('deals.') ? 'DEAL' : 'NOTE'}</span></div><div class="ans-a">${esc(a.value)}</div></div>`).join('')
+      : '<div class="empty">What you capture on the right shows up here.</div>'}</div>`;
+  if (c.homework) {
+    h += `<div><div class="sec-label">Homework <span class="badge ok">Submitted</span></div><div class="card">${c.homework.map(([qq, a]) => `<div class="hw-q">${qq}</div><div class="hw-a">${a}</div>`).join('')}</div></div>`;
+    h += `<div class="card"><div class="kv"><span>${c.video[0]}</span><span>${c.video[1]}%</span></div><div class="bar"><i style="width:${c.video[1]}%"></i></div></div>`;
+  }
+  if (c.last) h += `<div><div class="sec-label">Last call</div><div class="card" style="font-size:12px;line-height:1.55;color:var(--text-mid)">${c.last}</div></div>`;
+  if (c.facts) h += `<div><div class="sec-label">${c.homework ? 'On the deal' : 'From their booking'}</div><div class="card">${c.facts.map(([k, v]) => `<div class="kv"><span>${k}</span><span>${v}</span></div>`).join('')}</div></div>`;
+  if (c.market) h += `<div><div class="sec-label">${c.territory}</div><div class="card">${c.market.map(([k, v]) => `<div class="kv"><span>${k}</span><span>${v}</span></div>`).join('')}</div></div>`;
+  if (c.activity) h += `<div><div class="sec-label">Recent activity</div><div class="card"><ul class="feed">${c.activity.map(([t, d]) => `<li>${t}<small>${d}</small></li>`).join('')}</ul></div></div>`;
+  if (!c.facts) h += `<div class="card empty">Sample card. Full info shows for Marcus Bell (Intro Call) and Priya Raman (Meeting 1).</div>`;
+  $('info').innerHTML = h;
 }
 
+/* RIGHT — what you do */
 function renderSteps() {
   $('steps').innerHTML = steps().map((s, i) => {
-    const done = i < stepIdx || (s.key !== '__wrap' && s.captures?.some(c => answers[s.key + '.' + c.key]));
+    const done = s.key !== '__wrap' && s.captures.some(c => answers[s.key + '.' + c.key]);
     return `<button class="step-pill ${i === stepIdx ? 'active' : done ? 'done' : ''}" data-i="${i}"><span class="n">${done && i !== stepIdx ? '✓' : i + 1}</span>${s.label}</button>`;
   }).join('');
   $('steps').querySelectorAll('.step-pill').forEach(b => b.onclick = () => go(+b.dataset.i));
-  const active = $('steps').querySelector('.active'); active?.scrollIntoView({ inline: 'center', block: 'nearest' });
-  $('progressFill').style.width = ((stepIdx + 1) / steps().length * 100) + '%';
+  $('steps').querySelector('.active')?.scrollIntoView({ inline: 'center', block: 'nearest' });
   $('prevBtn').classList.toggle('invisible', stepIdx === 0);
-  $('nextBtn').classList.toggle('hidden', stepIdx === steps().length - 1);
+  $('nextBtn').classList.toggle('invisible', stepIdx === steps().length - 1);
   $('bottomMid').textContent = `${stepIdx + 1} of ${steps().length}`;
 }
-
 function renderStep() {
   const s = steps()[stepIdx];
-  const host = $('stepHost');
-  const mini = `<div class="client-mini blurable"><div class="avatar">${CANDIDATE.initials}</div><div><div style="font-weight:800;font-size:13px">${CANDIDATE.name}</div><div style="font-size:10px;opacity:.85">📍 ${CANDIDATE.territory} · day ${CANDIDATE.daysInPipeline}</div></div><div class="acts">${actionBtns()}</div></div>`;
-  if (s.key === '__wrap') { host.innerHTML = mini + wrapHTML(); bindWrap(); renderSteps(); return; }
-  host.innerHTML = mini + `
-    <div class="eyebrow blurable">Step ${stepIdx + 1} · ${s.label}</div>
-    <div class="headline blurable">${fill(s.headline)}</div>
-    <div class="tp blurable"><div class="tp-label">Talking point</div><div class="tp-text">${fill(s.talk)}</div></div>
-    ${s.captures.map(c => captureHTML(s, c)).join('')}`;
-  bindCaptures(s);
-  renderSteps();
+  if (s.key === '__wrap') { $('stepHost').innerHTML = wrapHTML(); bindWrap(); renderSteps(); return; }
+  $('stepHost').innerHTML = `<div class="eyebrow blurable">${s.label}</div><div class="headline blurable">${fill(s.headline)}</div>
+    <div class="tp blurable"><div class="tp-text">${fill(s.talk)}</div></div>${s.captures.map(c => captureHTML(s, c)).join('')}`;
+  bindCaptures(s); renderSteps();
 }
-
 function captureHTML(s, c) {
   const id = s.key + '.' + c.key, cur = answers[id]?.value;
-  const tag = c.writes.startsWith('deals.') ? '<span class="dest fact">DEAL</span>' : '<span class="dest said">CALL NOTE</span>';
   let inner = '';
-  if (c.type === 'choice') {
-    const was = c.prefillFrom ? CANDIDATE[c.prefillFrom] : null;
-    inner = `<div class="opt-grid">${c.options.map(o => `<button class="opt ${cur === o ? 'sel' : ''}" data-v="${o}">${o}${o === was ? '<span class="was">REPORTED</span>' : ''}</button>`).join('')}</div>`;
-  } else if (c.type === 'yn') {
-    inner = `<div class="yn"><button class="yn-btn yn-yes ${cur === c.yes ? 'sel' : ''}" data-v="${c.yes}">${c.yes}</button><button class="yn-btn yn-no ${cur === c.no ? 'sel' : ''}" data-v="${c.no}">${c.no}</button></div>`;
-  } else if (c.type === 'chips') {
-    const list = cur ? cur.split(' · ') : [];
-    inner = `<div class="add-row"><input class="add-input" placeholder="${c.placeholder || ''}"><button class="add-btn">Add</button></div>
-             <div class="chips">${list.map((t, i) => `<span class="chip">${esc(t)}<button data-i="${i}">✕</button></span>`).join('')}</div>`;
-  } else if (c.type === 'confirm') {
-    inner = `<button class="confirm ${cur ? 'sel' : ''}"><span class="box">✓</span>${c.text}</button>`;
-  }
-  return `<div class="field blurable" data-cap="${c.key}"><div class="field-label">${fill(c.label)} ${tag}</div>${inner}</div>`;
+  if (c.type === 'choice') { const was = c.prefillFrom ? cand[c.prefillFrom] : null; inner = `<div class="opt-grid">${c.options.map(o => `<button class="opt ${cur === o ? 'sel' : ''}" data-v="${o}">${o}${o === was ? '<span class="was">REPORTED</span>' : ''}</button>`).join('')}</div>`; }
+  if (c.type === 'yn') inner = `<div class="yn"><button class="yn-btn yn-yes ${cur === c.yes ? 'sel' : ''}" data-v="${c.yes}">${c.yes}</button><button class="yn-btn yn-no ${cur === c.no ? 'sel' : ''}" data-v="${c.no}">${c.no}</button></div>`;
+  if (c.type === 'chips') { const list = cur ? cur.split(' · ') : []; inner = `<div class="add-row"><input class="add-input" placeholder="${c.placeholder || ''}"><button class="add-btn">Add</button></div><div class="chips">${list.map((t, i) => `<span class="chip">${esc(t)}<button data-i="${i}">✕</button></span>`).join('')}</div>`; }
+  if (c.type === 'confirm') inner = `<button class="confirm ${cur ? 'sel' : ''}"><span class="box">✓</span>${c.text}</button>`;
+  return `<div class="field blurable" data-cap="${c.key}"><div class="field-label">${fill(c.label)}</div>${inner}</div>`;
 }
-
 function bindCaptures(s) {
   s.captures.forEach(c => {
     const el = $('stepHost').querySelector(`[data-cap="${c.key}"]`), id = s.key + '.' + c.key;
-    const set = v => { if (v) answers[id] = { step: s.label, label: fill(c.label), value: v, writes: c.writes }; else delete answers[id]; renderAnswered(); renderStep(); };
+    const set = v => { if (v) answers[id] = { label: fill(c.label), value: v, writes: c.writes }; else delete answers[id]; renderInfo(); renderStep(); };
     if (c.type === 'choice' || c.type === 'yn') el.querySelectorAll('[data-v]').forEach(b => b.onclick = () => set(answers[id]?.value === b.dataset.v ? null : b.dataset.v));
     if (c.type === 'confirm') el.querySelector('.confirm').onclick = () => set(answers[id] ? null : 'Yes');
     if (c.type === 'chips') {
       const inp = el.querySelector('.add-input'), list = () => answers[id]?.value ? answers[id].value.split(' · ') : [];
       const add = () => { const v = inp.value.trim(); if (!v) return; set([...list(), v].join(' · ')); setTimeout(() => $('stepHost').querySelector(`[data-cap="${c.key}"] .add-input`)?.focus(), 0); };
-      el.querySelector('.add-btn').onclick = add;
-      inp.onkeydown = e => { if (e.key === 'Enter') add(); };
+      el.querySelector('.add-btn').onclick = add; inp.onkeydown = e => { if (e.key === 'Enter') add(); };
       el.querySelectorAll('.chip button').forEach(b => b.onclick = () => { const l = list(); l.splice(+b.dataset.i, 1); set(l.join(' · ')); });
     }
   });
 }
 
-function renderAnswered() {
-  const items = Object.values(answers);
-  $('ansCount').textContent = items.length;
-  if (!items.length) { $('answered').innerHTML = '<div class="empty">Answers appear here as you go. Blue = saved to the deal, orange = call note.</div>'; return; }
-  const groups = {};
-  items.forEach(a => (groups[a.step] ||= []).push(a));
-  $('answered').innerHTML = Object.entries(groups).map(([g, list]) =>
-    `<div class="ans-group">${g}</div>` + list.map(a => `<div class="ans"><div class="ans-q"><span>${a.label}</span><span class="dest ${a.writes.startsWith('deals.') ? 'fact' : 'said'}">${a.writes.startsWith('deals.') ? 'DEAL' : 'NOTE'}</span></div><div class="ans-a">${esc(a.value)}</div></div>`).join('')
-  ).join('');
-}
-
-/* ═══════════ WRAP-UP (outcome + decision + book next / close out) ═══════════ */
+/* Wrap-up */
 function wrapHTML() {
-  const m = M(), next = m.nextKind ? MEETINGS[m.nextKind] : null;
-  const o = wrap.outcome, d = wrap.decision;
-  let h = `<div class="eyebrow blurable">Step ${stepIdx + 1} · Wrap up</div>
-    <div class="headline blurable">${o === 'No-show' ? 'They didn\'t show.' : next ? 'Decide, then book ' + next.label.split('·')[0].trim() + ' before you hang up.' : 'Decide the outcome.'}</div>
-    <div class="field blurable"><div class="field-label">Outcome</div>
-      <div class="yn">${['Held', 'No-show', 'Reschedule'].map(x => `<button class="yn-btn ${x === 'Held' ? 'yn-yes' : x === 'No-show' ? 'yn-no yn-red' : 'yn-no'} ${o === x ? 'sel' : ''}" data-out="${x}">${x}</button>`).join('')}</div></div>`;
-  if (o === 'No-show') return h + `<div class="result bad blurable"><h4>Marked as no-show</h4><p>No-show count goes to 1. Marcus gets the "pick a new time" email and text for the same meeting. The deal stays in <b>${CANDIDATE.stage}</b>.</p></div>`;
-  if (o === 'Reschedule') return h + slotsHTML('Pick the new time for this ' + m.label, 'Reschedule');
+  const m = M(), next = m.nextKind ? MEETINGS[m.nextKind] : null, o = wrap.outcome, d = wrap.decision;
+  let h = `<div class="eyebrow blurable">Wrap up</div><div class="headline blurable">${o === 'No-show' ? 'They didn\'t show.' : next ? 'Decide, then book ' + next.label.split('·')[0].trim() + '.' : 'Decide the outcome.'}</div>
+    <div class="field blurable"><div class="field-label">Outcome</div><div class="yn">${['Held', 'No-show', 'Reschedule'].map(x => `<button class="yn-btn ${x === 'Held' ? 'yn-yes' : x === 'No-show' ? 'yn-no yn-red' : 'yn-no'} ${o === x ? 'sel' : ''}" data-out="${x}">${x}</button>`).join('')}</div></div>`;
+  if (o === 'No-show') return h + `<div class="result bad blurable"><h4>No-show</h4><p>${cand.name.split(' ')[0]} gets the "pick a new time" email and text. The deal stays where it is.</p></div>`;
+  if (o === 'Reschedule') return h + slotsHTML('New time for this ' + m.label, 'Reschedule');
   if (o !== 'Held') return h;
   h += `<div class="field blurable"><div class="field-label">Decision</div><div class="opt-grid">${m.decisions.map(k => `<button class="opt ${d === k ? 'sel' : ''}" data-dec="${k}">${DECISIONS[k].label}</button>`).join('')}</div></div>`;
-  if (d === 'advance' && next) h += wrap.booked ? bookedHTML(next) : slotsHTML('Book ' + next.label + ' · ' + next.lengthMin + ' min', 'Book ' + next.label.split('·')[0].trim());
-  if (d === 'advance' && !next) h += `<div class="result good blurable"><h4>Ready for award</h4><p>Moves the deal to <b>Preparing To Accept Award</b>.</p></div>`;
-  if (DECISIONS[d]?.lostDefault) {
-    const r = wrap.lostReason || DECISIONS[d].lostDefault;
-    h += `<div class="field blurable"><div class="field-label">Lost reason <span class="hint">fixed list</span></div>
-      <select class="select" id="lostSel">${LOST_REASONS.map(x => `<option ${x === r ? 'selected' : ''}>${x}</option>`).join('')}</select></div>
-      ${wrap.lost ? `<div class="result bad blurable"><h4>Marked Lost · ${r}</h4><p>Deal closed. ${d === 'not_now' ? 'Nurture emails start in 30 days, segmented on this reason.' : 'No further emails.'}</p></div>` : `<button class="primary danger blurable" id="lostBtn">Mark Lost</button>`}`;
-  }
-  if (d === 'think_it_over') h += `<div class="result neutral blurable"><h4>Stays in ${CANDIDATE.stage}</h4><p>Flagged as stalled after ${m.stalledAfterDays} days with nothing booked. Their portal shows "Book your next meeting" so they can book themselves.</p></div>`;
+  if (d === 'advance' && next) h += wrap.booked ? `<div class="result good blurable"><h4>${next.label} booked</h4><ul><li>${wrap.bookedLabel} · invite sent with a Meet link</li><li>Card moves to ${stageOf(STAGES.find(s => s[2] === m.nextKind)[0])[1]}</li><li>Their portal unlocks the next video + homework</li></ul></div>` : slotsHTML(next.label + ' · ' + next.lengthMin + ' min', 'Book ' + next.label.split('·')[0].trim());
+  if (d === 'advance' && !next) h += `<div class="result good blurable"><h4>Ready for award</h4><p>Card moves to Preparing To Accept Award.</p></div>`;
+  if (DECISIONS[d]?.lost) { const r = wrap.lostReason || DECISIONS[d].lost;
+    h += `<div class="field blurable"><div class="field-label">Lost reason</div><select class="select" id="lostSel">${LOST_REASONS.map(x => `<option ${x === r ? 'selected' : ''}>${x}</option>`).join('')}</select></div>
+      ${wrap.lost ? `<div class="result bad blurable"><h4>Marked Lost · ${r}</h4><p>Card leaves the board.</p></div>` : `<button class="primary danger blurable" id="lostBtn">Mark Lost</button>`}`; }
+  if (d === 'think_it_over') h += `<div class="result neutral blurable"><h4>Stays in this stage</h4><p>Shows as stalled after ${m.stalledAfterDays} days with nothing booked. Their portal offers "Book your next meeting".</p></div>`;
   return h;
 }
 function slotsHTML(label, btn) {
-  const days = []; const d0 = new Date(2026, 10, 9);
-  for (let i = 0, d = new Date(d0); days.length < 6; i++, d.setDate(d.getDate() + 1)) if (d.getDay() % 6) days.push(new Date(d));
-  const sel = wrap.day ?? 1;
-  const times = ['9:00 AM', '10:00 AM', '11:00 AM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM'];
-  const busy = (i, t) => (i * 3 + t) % 4 === 0;
-  return `<div class="field blurable"><div class="field-label">${label} <span class="hint">Marcus's time zone · Central</span></div>
+  const days = []; for (let d = new Date(2026, 10, 9); days.length < 6; d.setDate(d.getDate() + 1)) if (d.getDay() % 6) days.push(new Date(d));
+  const sel = wrap.day ?? 1, times = ['9:00 AM', '10:00 AM', '11:00 AM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM'];
+  return `<div class="field blurable"><div class="field-label">${label}</div>
     <div class="days">${days.map((d, i) => `<button class="day ${i === sel ? 'sel' : ''}" data-day="${i}"><div class="dw">${d.toLocaleDateString('en-US', { weekday: 'short' })}</div><div class="dn">${d.getDate()}</div></button>`).join('')}</div>
-    <div class="times">${times.map((t, j) => `<button class="time ${wrap.time === t ? 'sel' : ''}" data-time="${t}" ${busy(sel, j) ? 'disabled' : ''}>${t}</button>`).join('')}</div>
+    <div class="times">${times.map((t, j) => `<button class="time ${wrap.time === t ? 'sel' : ''}" data-time="${t}" ${(sel * 3 + j) % 4 === 0 ? 'disabled' : ''}>${t}</button>`).join('')}</div>
     <button class="primary" id="bookBtn" ${wrap.time ? '' : 'disabled'}>${btn}${wrap.time ? ' · ' + days[sel].toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + ', ' + wrap.time : ''}</button></div>`;
-}
-function bookedHTML(next) {
-  return `<div class="result good blurable"><h4>${next.label} booked</h4><p>${wrap.bookedLabel}. Invite sent from Cal.com with a Meet link.</p>
-    <ul><li>Deal moved to <b>${next.label.replace('Meeting', 'Meeting').split('·')[0].trim()} Booked</b></li>
-    <li>Portal unlocks ${next.homework ? 'Video ' + next.label.match(/\d/)?.[0] + ' + homework (due 24h before)' : 'the next chapter'}</li>
-    <li>Answers and notes saved · transcript will attach when Meet finishes it</li></ul></div>`;
 }
 function bindWrap() {
   const host = $('stepHost');
@@ -635,82 +609,31 @@ function bindWrap() {
   host.querySelectorAll('[data-dec]').forEach(b => b.onclick = () => { wrap = { outcome: wrap.outcome, decision: b.dataset.dec }; renderStep(); });
   host.querySelectorAll('[data-day]').forEach(b => b.onclick = () => { wrap.day = +b.dataset.day; wrap.time = null; renderStep(); });
   host.querySelectorAll('[data-time]').forEach(b => b.onclick = () => { wrap.time = b.dataset.time; renderStep(); });
-  const bb = $('bookBtn'); if (bb) bb.onclick = () => { wrap.booked = true; wrap.bookedLabel = bb.textContent.split(' · ').slice(1).join(' · '); if (wrap.outcome === 'Reschedule') { alert('Rescheduled (prototype).'); } renderStep(); };
+  const bb = $('bookBtn'); if (bb) bb.onclick = () => { wrap.booked = true; wrap.bookedLabel = bb.textContent.split(' · ').slice(1).join(' · '); renderStep(); };
   const ls = $('lostSel'); if (ls) ls.onchange = () => { wrap.lostReason = ls.value; };
   const lb = $('lostBtn'); if (lb) lb.onclick = () => { wrap.lostReason = $('lostSel').value; wrap.lost = true; renderStep(); };
 }
 
-/* ═══════════ PREP (right column) ═══════════ */
-function renderPrep() {
-  const p = PREP[kind];
-  let h = '';
-  if (kind === 'intro') {
-    h += card('From their booking', p.booking.map(kv).join(''));
-    h += card('Their territory · ' + CANDIDATE.territory, p.market.map(kv).join(''));
-    h += card('Portal + email activity', `<ul class="feed">${p.activity.map(([t, d]) => `<li>${t}<small>${d}</small></li>`).join('')}</ul>`);
-    h += card('Homework', '<div class="empty">No homework before the Intro Call.</div>');
-  } else if (p) {
-    h += card(p.video.title, `<div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700"><span>Watched</span><span>${p.video.pct}%</span></div><div class="bar"><i style="width:${p.video.pct}%"></i></div>`, `<span class="badge ok">On time</span>`);
-    h += card('Homework answers', p.homework.map(([q, a]) => `<div class="hw-q">${q}</div><div class="hw-a">${a}</div>`).join(''), `<span class="badge ok">Submitted</span>`);
-    h += card('Last call', `<div style="font-size:12px;line-height:1.55;color:var(--text-mid)">${p.last}</div>`);
-    h += card('Since last call', `<ul class="feed">${p.activity.map(([t, d]) => `<li>${t}<small>${d}</small></li>`).join('')}</ul>`);
-  } else {
-    h += card('Homework answers', '<div class="empty">Stub meeting. Homework answers, video % and portal activity show here, same as Meeting 1.</div>', `<span class="badge warn">Stub</span>`);
-  }
-  $('prep').innerHTML = `<div class="card-label" style="margin:2px 2px 0">Their work</div>` + h;
-}
-const kv = ([k, v]) => `<div class="kv"><span>${k}</span><span>${v}</span></div>`;
-const card = (label, body, badge = '') => `<div class="card"><div class="card-label" style="justify-content:space-between"><span>${label}</span>${badge}</div>${body}</div>`;
-const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-
-/* ═══════════ TIMER (fixed region 2) ═══════════ */
-function paintTimer() {
-  const t = $('timer'), over = remaining < 0, a = Math.abs(remaining);
+/* Timer + nav */
+function paintTimer() { const t = $('timer'), over = remaining < 0, a = Math.abs(remaining);
   t.textContent = (over ? '+' : '') + Math.floor(a / 60) + ':' + String(a % 60).padStart(2, '0');
-  t.classList.toggle('warn', !over && remaining <= 300);
-  t.classList.toggle('over', over);
-}
-function start() {
-  live = true; $('app').classList.add('live'); $('gate').classList.add('hidden');
-  clearInterval(timerId); timerId = setInterval(() => { remaining--; paintTimer(); }, 1000);
-}
-
-/* ═══════════ NAV + SETUP ═══════════ */
+  t.classList.toggle('idle', !live); t.classList.toggle('warn', live && !over && remaining <= 300); t.classList.toggle('over', over); }
+function start() { live = true; $('panel').classList.add('live'); $('gate').classList.add('hidden'); clearInterval(timerId); timerId = setInterval(() => { remaining--; paintTimer(); }, 1000); paintTimer(); }
 function go(i) { stepIdx = Math.max(0, Math.min(steps().length - 1, i)); renderStep(); $('content').scrollTop = 0; }
-function load(k) {
-  kind = k; stepIdx = 0; answers = {}; wrap = {}; live = false;
-  $('app').classList.remove('live'); $('gate').classList.remove('hidden');
-  clearInterval(timerId); remaining = M().lengthMin * 60; paintTimer();
-  $('tbKind').textContent = M().label; $('gateTitle').textContent = 'Start ' + M().label;
-  CANDIDATE.stage = k === 'intro' ? 'Intro Call Booked' : M().label.replace(/ ·.*/, '') + ' Booked';
-  $('notes').value = '';
-  renderClient(); renderAnswered(); renderPrep(); renderStep();
-}
-$('prevBtn').onclick = () => go(stepIdx - 1);
-$('nextBtn').onclick = () => go(stepIdx + 1);
+$('prevBtn').onclick = () => go(stepIdx - 1); $('nextBtn').onclick = () => go(stepIdx + 1);
 $('startMeet').onclick = start; $('startPhone').onclick = start;
-$('endBtn').onclick = () => go(steps().length - 1);
 let saveT; $('notes').oninput = () => { $('savedFlag').classList.remove('on'); clearTimeout(saveT); saveT = setTimeout(() => $('savedFlag').classList.add('on'), 600); };
-$('tabs').querySelectorAll('.tab').forEach(t => t.onclick = () => {
-  $('body').dataset.pane = t.dataset.pane;
-  $('tabs').querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === t));
-});
+$('ptabs').querySelectorAll('.ptab').forEach(t => t.onclick = () => { $('pbody').dataset.pane = t.dataset.pane; $('ptabs').querySelectorAll('.ptab').forEach(x => x.classList.toggle('active', x === t)); });
 
 /* Demo toolbar */
-$('kindSel').innerHTML = Object.entries(MEETINGS).map(([k, m]) => `<option value="${k}">${m.label}</option>`).join('');
-$('kindSel').onchange = e => load(e.target.value);
 document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => {
   document.querySelectorAll('[data-view]').forEach(x => x.classList.toggle('on', x === b));
-  const v = b.dataset.view, app = $('app'), stage = $('stage');
-  stage.classList.toggle('framed', v !== 'full');
-  app.style.width = v === 'phone' ? '390px' : v === 'panel' ? '360px' : '100%';
-  app.style.flex = v === 'full' ? '1' : 'none';
+  $('stage').classList.toggle('framed', b.dataset.view === 'phone');
 });
-$('jumpWarn').onclick = () => { if (!live) start(); remaining = 270; paintTimer(); };
-$('jumpOver').onclick = () => { if (!live) start(); remaining = -45; paintTimer(); };
-$('resetBtn').onclick = () => load(kind);
+$('jumpWarn').onclick = () => { if (!cand) openPanel(1); if (!live) start(); remaining = 270; paintTimer(); };
+$('jumpOver').onclick = () => { if (!cand) openPanel(1); if (!live) start(); remaining = -45; paintTimer(); };
 
-load('intro');
+renderKpis(); setView('kanban');
 </script>
 </body>
 </html>

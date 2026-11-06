@@ -408,7 +408,7 @@ Roughly **$40–100/month before e-sign**. Pipedrive (about $70) replaced none o
 ### 7.2 Staff
 
 - Google sign-in (Auth.js), limited to `@risemodernwellness.com` and to emails on `staff_users`.
-- **No roles for now (decided):** Garrett and Rachel both have full access. Every write still records `actor_staff_id` in `audit_log`, so roles can be added later without losing history.
+- **No roles for now (decided):** Garrett and Rachel share one login, `admin@risemodernwellness.com`, with full access. Every write still records `actor_staff_id` in `audit_log`, so roles can be added later without losing history.
 - **View as candidate:** `/portal?as=<candidateId>` works only with a staff session. Build when needed.
 
 ---
@@ -761,6 +761,6 @@ Event naming: `object_action` with typed props, checked at compile time by `lib/
 | Q12 | What creates new deals in Pipedrive today (the current lead form or automation)? It gets switched to the portal at launch. | Garrett / Claude to trace |
 | Q13 | Which automations run in Pipedrive today? Inventory them (screenshots, or Claude walks the automations page in Chrome) so each is rebuilt in §7A.1. | Garrett |
 | Q14 | Google Workspace plan: Business Starter, or Standard and up? Decides Meet-native transcripts vs a note-taker bot (§7A.4). Check admin.google.com → Billing → Subscriptions. | Garrett |
-| Q16 | ~~Territory sizing~~ Decided: binary available / taken by city + state (§11A.3). Still needed: the list of the ~33 taken territories (city, state, store). | Garrett |
-| Q17 | Rachel's Google sign-in email for the staff allow list. | Garrett |
+| Q16 | ~~Territory sizing~~ Decided: binary available / taken by city + state (§11A.3). The ~33 taken territories are seeded at build time (Phase 1). | — |
+| Q17 | ~~Rachel's sign-in~~ Decided: Garrett and Rachel share `admin@risemodernwellness.com`; that's the one staff login. | — |
 | Q15 | E-sign tool for the FDD receipt and agreement: existing DocuSign account + API plan, a cheaper API (BoldSign, Dropbox Sign, Documenso), or manual at launch? Franchise counsel to confirm the tool is acceptable for FDD receipts. | Garrett + counsel |

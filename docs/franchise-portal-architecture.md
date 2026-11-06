@@ -408,7 +408,7 @@ Roughly **$40–100/month before e-sign**. Pipedrive (about $70) replaced none o
 ### 7.2 Staff
 
 - Google sign-in (Auth.js), limited to `@risemodernwellness.com` and to emails on `staff_users`.
-- Roles: `owner` (Garrett: everything), `viewer` (read-only, for later). Every write records `actor_staff_id` in `audit_log`.
+- **No roles for now (decided):** Garrett and Rachel both have full access. Every write still records `actor_staff_id` in `audit_log`, so roles can be added later without losing history.
 - **View as candidate:** `/portal?as=<candidateId>` works only with a staff session. Build when needed.
 
 ---
@@ -424,8 +424,10 @@ deals              id serial pk, candidate_id fk, status ('open'|'won'|'lost'),
                    lost_reason_id fk null, lost_comment,
                    territory_id fk null, territory_label, territory_locked bool,
                    lead_source, attribution jsonb (utm_*, fbclid, gclid, referrer, landing),
+                   place_query, place_label, place_lat, place_lng, place_id,
                    months_looking int, owned_business_before bool, business_name,
-                   net_worth_band, liquid_capital_band (encrypted), net_worth_verified bool,
+                   net_worth_meets_min bool, net_worth_band, liquid_meets_min bool,
+                   liquid_capital_band (bands encrypted), net_worth_verified bool,
                    funding_plan, target_open,
                    fdd_sent_at, fdd_receipt_signed_at,
                    proof_of_funds_verified_at, validation_calls_done int,
@@ -569,6 +571,48 @@ computePortalState({
 
 ---
 
+## 11A. Content, forms and assets (decided 2026-11-06)
+
+### 11A.1 No upload screen: content is code
+
+There's no admin UI for content. Garrett, or anyone with repo access, hands Claude the file and says where it goes. Claude uploads it, updates the content file and opens a pull request. The preview deploy shows the change; merging publishes it.
+
+| Asset | Lives in | Added by |
+|---|---|---|
+| Course videos | Mux | `scripts/upload-video.ts` → Mux playback ID written into `content/chapters.ts` |
+| PDFs, decks, worksheets | Private Vercel Blob | `scripts/upload-asset.ts` → entry in `content/assets.ts` (id, title, blob key, sha256) |
+| FDD | Private Vercel Blob, **versioned** | `scripts/upload-asset.ts --fdd <version>`. A new FDD is a new version, never a replaced file, so every `legal_records` row keeps pointing at the exact document received. `content/assets.ts` marks which version is current. |
+| Photos, logos | `public/` (compressed to web size first; source exports are 12–21 MB) | Committed |
+| Words: chapter text, agenda items, email copy | `content/*.ts`, `content/emails/` | Edited directly |
+
+### 11A.2 One form engine for homework, call captures and booking questions
+
+Every form is a versioned definition in `content/forms/` (e.g. `m2-homework@3`). Supported question types: short text, long text, single choice, multiple choice, number, percent, slider, rating scale, date, fill-in-the-blank. New types are added to the engine once and are then available everywhere.
+
+- **Answers** are stored as `jsonb` keyed by question id, with the form key and version (`homework.form_version`, `meeting_captures` per capture key). Adding or changing a question is a content edit plus a version bump; no migration. Old answers keep the version they were given against.
+- The same engine renders candidate homework (portal), Garrett's capture fields (call screen) and the booking questions (Intro Call booking).
+- A capture that's a **fact** still writes to its `deals` column (§6.3 rule); the form definition says which.
+
+### 11A.3 Territories (approach decided, sizing rule pending)
+
+- **What the candidate types** (any city: Houston, Tomball, Spring) is stored on the deal as typed, plus its geocoded point and place id: `deals.place_query`, `place_label`, `place_lat`, `place_lng`, `place_id`.
+- **A territory** is a defined area: a set of ZIPs, sized by the rule in RISE's FDD (Item 12 / the franchise agreement). **Only sold and reserved territories exist as `territories` rows** (Kingwood and the other open stores). Everything else is open area.
+- **The report** shows the typed place on a map with nearby sold/reserved territories shaded, and says territories are available in that area. It never promises a specific territory; that's set at the Territory Meeting (`deals.territory_id`, `territory_locked`).
+- **Pending:** the sizing rule (Q16) and the import of existing store territories.
+
+### 11A.4 Qualification data (schema decided, order pending)
+
+The schema stores both a yes/no and a band, so the question order can change without a migration: `net_worth_meets_min bool`, `net_worth_band`, `liquid_meets_min bool`, `liquid_capital_band`. Proposed order (Q8): opt-in = name, email, city; booking = phone + SMS consent + the two yes/no questions; Intro Call = exact bands.
+
+### 11A.5 Data retention (decided)
+
+- Candidates whose every deal is lost: personal details are anonymized **3 years** after the last deal closed (nightly `cron/retention`).
+- `events`: deleted after **3 years**.
+- `legal_records` and the FDD versions they point at: kept indefinitely.
+- Deletion requests: everything except legal records, logged in `audit_log`.
+
+---
+
 ## 12. Pipedrive transition
 
 | Step | When | What |
@@ -616,7 +660,7 @@ rise-franchise-portal/
       lead/ booking/ track/ progress/ homework/ resources/ auth/
       webhooks/calcom/ webhooks/esign/ webhooks/resend/ webhooks/twilio/ webhooks/google/
       inngest/                    automation functions endpoint
-      cron/stale-deals/ cron/meeting-prep/ cron/followup-emails/ cron/backup/
+      cron/stale-deals/ cron/meeting-prep/ cron/followup-emails/ cron/backup/ cron/retention/
   components/
     candidate/                    Hero, TerritorySearch, ReportMap, BookingPicker,
                                   ChapterSheet, StepVideo, StepPdf, HomeworkForm, NextMeeting
@@ -625,6 +669,8 @@ rise-franchise-portal/
   content/
     meetings.ts                   per-meeting captures + homework form refs (§6.3)
     chapters.ts                   portal chapter content
+    forms/                        versioned form definitions (§11A.2)
+    assets.ts                     uploaded asset + FDD version registry
     emails/                       email copy
     automations.ts                trigger / condition / action / stop rules (§7A.1)
   lib/
@@ -638,7 +684,8 @@ rise-franchise-portal/
 
 ### 13.3 Environments and secrets
 
-- **Domain:** add `franchise.risemodernwellness.com` to the new Vercel project; `CNAME` from wherever `risemodernwellness.com` DNS lives. The main site is untouched.
+- **Domain:** add `franchise.risemodernwellness.com` to the new Vercel project. DNS for `risemodernwellness.com` stays at **SiteGround**: add a `CNAME` for `franchise` to Vercel, plus Resend's SPF/DKIM/DMARC records for the mail subdomain. The main site is untouched.
+- **Vendor accounts (decided):** every service (Vercel, Neon, Mux, Resend, Twilio, Cal.com, Inngest, Sentry, e-sign) is registered to `admin@risemodernwellness.com`.
 - **Database per environment:** the Neon Vercel integration gives every preview deploy its own database branch, so previews never touch production data. Production → the main branch.
 - **Cal.com:** test event types for preview, real ones for production.
 - **Secrets (Vercel env vars):** `DATABASE_URL`, `SESSION_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `CALCOM_API_KEY`, `CALCOM_WEBHOOK_SECRET`, `DOCUSIGN_*`, `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `BLOB_READ_WRITE_TOKEN`, `MUX_TOKEN_ID`, `MUX_TOKEN_SECRET`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_NUMBER`, `INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY`, `GOOGLE_MEET_OAUTH_*`, `TRANSCRIBE_API_KEY`, `TURNSTILE_SECRET`, `META_CAPI_TOKEN`, `CENSUS_API_KEY`, `MAPBOX_TOKEN`, `GOOGLE_PLACES_KEY`, `FIELD_ENCRYPTION_KEY`, `CRON_SECRET`. `PIPEDRIVE_API_TOKEN` only locally, for the import script.
@@ -702,15 +749,17 @@ Event naming: `object_action` with typed props, checked at compile time by `lib/
 | Q1 | **What does each meeting capture?** Go meeting by meeting, Intro first: what Garrett needs on screen, what he records, and which of those are facts (columns) vs what was said (captures). | Garrett |
 | Q2 | Is FDD Review its own meeting, or folded into Meeting 5? (Currently folded.) | Garrett |
 | Q3 | Is the Territory meeting in the right place (after Meeting 5)? | Garrett |
-| Q4 | Is homework free-written answers or set form fields? | Garrett |
+| Q4 | ~~Homework format~~ Decided: versioned forms with any question type (§11A.2). | — |
 | Q5 | Is Confirmation Day booked through Cal.com, or arranged by hand? | Garrett |
 | Q6 | How long after a no-show, with no rebooking, is the deal marked Lost? | Garrett |
 | Q7 | `stalledAfterDays` for each "Booked" stage after the first | Garrett |
-| Q8 | Net worth and liquid capital bands (cut-offs around the $720K minimum) | Garrett |
+| Q8 | Net worth / liquid capital: band cut-offs, and when each question is asked (opt-in, booking or Intro Call). Schema supports any order (§11A.4). | Garrett |
 | Q9 | Do Garrett's own Gmail threads with candidates need to show on the deal timeline? If yes: a BCC logging address, or the Gmail API. | Garrett |
 | Q10 | Prep-ready nudge 24h before a call: none, web push, or Connecteam DM? | Garrett |
 | Q11 | Length of each call (sets the Cal.com event type durations) | Garrett |
 | Q12 | What creates new deals in Pipedrive today (the current lead form or automation)? It gets switched to the portal at launch. | Garrett / Claude to trace |
 | Q13 | Which automations run in Pipedrive today? Inventory them (screenshots, or Claude walks the automations page in Chrome) so each is rebuilt in §7A.1. | Garrett |
 | Q14 | Google Workspace plan: Business Starter, or Standard and up? Decides Meet-native transcripts vs a note-taker bot (§7A.4). Check admin.google.com → Billing → Subscriptions. | Garrett |
+| Q16 | Territory sizing rule: what RISE's FDD (Item 12 / franchise agreement) defines a territory as (ZIPs, population, radius), and where existing store territories are recorded for import. | Garrett + counsel |
+| Q17 | Rachel's Google sign-in email for the staff allow list. | Garrett |
 | Q15 | E-sign tool for the FDD receipt and agreement: existing DocuSign account + API plan, a cheaper API (BoldSign, Dropbox Sign, Documenso), or manual at launch? Franchise counsel to confirm the tool is acceptable for FDD receipts. | Garrett + counsel |

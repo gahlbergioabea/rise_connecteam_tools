@@ -3,7 +3,7 @@
 **Domain:** `franchise.risemodernwellness.com`
 **Repo:** `rise-franchise-portal` (new, private). See §13.
 **Source designs:** canvas "RISE Franchise Landing Page Mockup". Boards `Main` (landing + opt-in), `Territory-Report` (report + intro-call booking), `Sales-Portal` (candidate portal).
-**Systems:** one Next.js app on Vercel, one Postgres database (Neon), Cal.com, DocuSign, an email sender (Resend).
+**Systems:** one Next.js app on Vercel, one Postgres database (Neon), Cal.com + Google Meet, an e-sign provider, Resend (email), Twilio (calls + SMS), Inngest (automations), Mux (course video).
 **Revised:** 2026-11-06. This version drops Pipedrive as the store of record (§2). Earlier versions are in git history on this branch.
 
 ---
@@ -83,6 +83,8 @@ flowchart LR
   DATA["Census · Mapbox · Google Places"]
   ADS["Meta CAPI · GA4"]
   VID["Mux (video)"]
+  TW["Twilio<br/>calls · SMS · recordings"]
+  GM["Google Meet<br/>recordings · transcripts"]
 
   LP & PO & AD --> MW --> API --> DB
   API --> JOBS
@@ -90,6 +92,8 @@ flowchart LR
   CAL -- booking events --> WH
   DS -- envelope events --> WH
   MAIL -- delivered / opened / clicked --> WH
+  TW -- call + SMS events --> WH
+  GM -- transcript ready --> WH
   WH --> DB
   JOBS --> MAIL & ADS & DATA & DS
   PO -. signed URL .-> BLOB
@@ -263,26 +267,33 @@ The console is how data gets in. Garrett takes most calls from his phone, so eve
 - About 24h before each meeting, a job marks the prep ready and (optional, Q10) sends Garrett a push or Connecteam DM with the same link.
 - Plain IDs are fine here because every `/admin` route requires a staff session.
 
-### 6.2 The call screen (`/admin/meetings/[id]`)
+### 6.2 The call screen (`/admin/meetings/[id]`): one layout for every meeting (decided)
 
-One page, top to bottom, in the order of the call:
+**Build the UX once.** Like the candidate portal, the call screen has the same regions on every call; only the content changes per meeting kind (§6.3). Top to bottom, in the order of the call:
 
-1. **Header:** candidate name, territory, stage, days in pipeline, meeting kind and time. Tap-to-call and tap-to-email.
-2. **Prep:** that meeting's homework answers; video watched (yes/no, %); FDD opened (from meeting 4 on); portal activity since the last call; last call's notes. This replaces the prep sheet attached to a CRM activity.
-3. **Capture:** the inputs defined for this meeting kind (§6.3). Each writes straight to its column or to `meeting_captures`. Autosaves on every change, so a dropped call or a closed tab loses nothing.
-4. **Notes:** one free-text box (dictation-friendly on mobile). Saved as a note on the meeting.
-5. **Outcome:** `Held` / `No-show` / `Reschedule` buttons. No-show bumps the count and triggers the "pick a new time" email.
-6. **Book next:** the Cal.com picker for the next meeting kind, inline. Picking a slot books it, moves the deal, and sends the invite. This is always the last step of a call.
-7. **Close out:** `Mark Lost` (reason from the fixed list + optional comment) and, on later stages, `Preparing award` / `Fee collected`.
+1. **Header:** candidate name, territory, stage, days in pipeline, meeting kind and time. Tap to call (Twilio, §7A.3), tap to text, tap to email, **Join Meet**.
+2. **Timer:** counts down from the booked length. Amber at 5 minutes left, red when over. Starts on "Start call" or at the booked time. The actual length is saved on the meeting (`duration_min`).
+3. **Agenda:** that meeting's talking points, ticked off as the call goes.
+4. **Their work (prep):** that meeting's homework answers; video watched (yes/no, %); FDD opened (from Meeting 4 on); portal activity since the last call; last call's summary and notes.
+5. **Capture:** the inputs defined for this meeting kind. Each writes straight to its column or to `meeting_captures`. Autosaves on every change, so a dropped call or a closed tab loses nothing. After the call, fields Claude pre-filled from the transcript show as "suggested" until Garrett confirms them (§7A.4).
+6. **Notes:** one free-text box (dictation-friendly on mobile). Saved as a note on the meeting.
+7. **Outcome:** `Held` / `No-show` / `Reschedule`. No-show bumps the count and triggers the "pick a new time" email.
+8. **Decision + book next:** the meeting's decision options and the Cal.com picker for the next meeting kind, inline. Picking a slot books it, moves the deal and sends the invite. This is always the last step of a call.
+9. **Close out:** `Mark Lost` (reason from the fixed list + optional comment) and, on later stages, `Preparing award` / `Fee collected`.
 
-### 6.3 What each meeting captures
+### 6.3 What changes per meeting
 
-Each meeting kind has a capture definition in `content/meetings.ts`: its inputs, their types, and where each one writes. The capture forms are generated from it, and the same definition drives the prep section and the Claude views. **Defining these, meeting by meeting, is the next design step (Q1).** Shape:
+Each meeting kind has one entry in `content/meetings.ts`: **length, agenda, which homework to show, capture inputs, decision options and next meeting.** The call screen, the prep section, the Claude views and the Cal.com event type length all read from it. Adding or changing a meeting is a config edit, not a new screen. **Filling these in, meeting by meeting, is the next design step (Q1).** Shape:
 
 ```ts
 export const meetings = {
   intro: {
     label: 'Intro Call',
+    lengthMin: 20,                       // draft
+    agenda: ['Their why', 'Background', 'RISE in two minutes', 'Money check',
+             'Territory and timing', 'Questions', 'Decide and book Meeting 1'],  // draft
+    homework: null,                      // no homework before the intro
+    decisions: ['advance', 'not_a_fit', 'not_now', 'think_it_over'],
     nextKind: 'm1',
     captures: [
       { key: 'net_worth_verified', label: 'Net worth confirmed on call', type: 'boolean', writes: 'deals.net_worth_verified' },
@@ -297,6 +308,91 @@ export const meetings = {
 ```
 
 Rule for `writes`: if it's a **fact** we'll filter or gate on (net worth, proof of funds, territory), it's a column on `deals`. If it's **what was said**, it's a `meeting_captures` row, keyed by `capture_key`, so it's still queryable ("show me every 'why now' answer").
+
+**Intro Call draft** (pending Garrett's agenda, Q1): captures net worth confirmed, liquid capital band, funding plan, owner-operator vs investor, decision makers, target open, territory confirmed (all `deals` columns); "why now", background, concerns (`meeting_captures`). The long vision / five-year / financial-metrics questions from the old Pipedrive application move to Meeting 1 homework.
+
+---
+
+## 7A. Communications: email, automations, SMS, calls, meeting recordings
+
+### 7A.1 Automations (decided: built in, not bought)
+
+Anything Pipedrive's automations did, plus triggers Pipedrive couldn't see (portal inactivity, video %, homework status, email clicks). Each automation is a rule in `content/automations.ts`, with copy in `content/emails/`:
+
+| Part | Examples |
+|---|---|
+| **Trigger** | Entered a stage · marked Lost (with reason) · N days in stage · N days inactive in the portal · homework due in 72h and not submitted · meeting was a no-show · meeting in 1h |
+| **Condition** | Lost reason is X · no meeting booked · not unsubscribed · email not bounced |
+| **Action** | Send email N · send SMS · notify Garrett |
+| **Stop when** | Books · stage changes · deal closes · unsubscribes |
+
+- **Runs on Inngest** (durable steps: wait N days, re-check, send; cancel on a "booked" or "stage changed" event). Every action re-checks the stop conditions right before it fires.
+- Each automation has an on/off switch in `/admin/settings`. Rules change by editing the file (Garrett asks Claude), not in a visual builder.
+- The 14-day follow-up emails (§5.4) are the first automation. Example of a second: Lost from `territory_check` with "No response" → wait 30 days → value-first territory insight → wait 60 days → next one → stop on re-opt-in or unsubscribe.
+- **Before launch:** inventory the automations live in Pipedrive today and rebuild each one deliberately (Q13).
+
+### 7A.2 Email deliverability
+
+1. Send from a **subdomain** (e.g. `garrett@mail.risemodernwellness.com`) through **Resend**, so its reputation is separate from the main Google Workspace domain.
+2. **SPF, DKIM and DMARC** on that subdomain before the first send.
+3. Emails **from Garrett**, mostly plain text, one link, no heavy templates.
+4. **One-click unsubscribe** (`List-Unsubscribe` header) and a physical address on every nurture email. Transactional mail (magic links, booking confirmations) doesn't carry it.
+5. Bounces and complaints come back by webhook and go on a **suppression list** at once.
+6. **Reply-to is Garrett's Gmail.** Replies land where he works and help sender reputation.
+7. Ramp gradually. Never blast the imported Pipedrive list.
+
+`emails` gains `kind ('transactional'|'nurture')`, `bounced_at`, `complained_at`; `candidates` gains `email_unsubscribed_at`, `sms_consent_at`, `sms_unsubscribed_at`.
+
+### 7A.3 SMS and calls (Twilio)
+
+- **Its own Twilio sub-account and number**, separate from RISE OS.
+- **Click-to-call:** Twilio rings Garrett's phone, then bridges the candidate, with the RISE franchise number as caller ID. Calls are recorded; the recording and length attach to the meeting (or to a `calls` row when no meeting exists).
+- **Recording notice** at the start of every phone call ("This call may be recorded"), because about a dozen states (California and Florida among them) require all-party consent.
+- **Two-way SMS**, logged on the deal timeline, usable by automations (for example a reminder 1h before a call). STOP replies set `sms_unsubscribed_at`.
+- **Before SMS goes live:** A2P 10DLC carrier registration (about 1–2 weeks), and an SMS consent checkbox on the opt-in form, in the landing page design now.
+
+New table: `messages (id, deal_id, channel 'sms', direction, body, twilio_sid, at)` and `calls (id, deal_id, meeting_id null, direction, twilio_sid, started_at, duration_s, recording_url, transcript_id null)`.
+
+### 7A.4 Video calls: Google Meet + transcripts (decided: stay on Meet)
+
+```text
+Booking (Cal.com, Google Meet as location) → Calendar event with Meet link
+  → meetings.meet_url stored; call screen shows "Join Meet"
+Call in Meet with recording + transcript on
+  → Google Workspace Events API notifies the app that the transcript is ready
+  → app pulls transcript + recording link via the Meet REST API
+  → Claude writes a summary + suggested capture values
+  → Garrett confirms them on the call screen
+```
+
+- Needs Meet recording and transcripts, which come with **Google Workspace Business Standard or higher** (Q14). On Business Starter, the fallback is a note-taker bot (Fireflies or Recall.ai) feeding the same `transcripts` table.
+- One-time Google OAuth consent from Garrett's account (read-only scopes for his meetings' recordings and transcripts).
+- **Phone calls** use the same pattern: Twilio recording → transcription service (about $0.25–0.50 per audio hour) → `transcripts`.
+- No in-app video (Daily, LiveKit): candidates keep the Meet link they know, and we don't own video quality.
+
+New table: `transcripts (id, meeting_id null, call_id null, source 'meet'|'twilio'|'bot', text, recording_url, summary, suggested_captures jsonb, created_at)`.
+
+### 7A.5 Video hosting for the course
+
+- **Mux** for portal course videos: our player sends progress to `/api/progress`, so watch data lives in our database whatever the host. Mux's free plan should cover the 5 course videos plus extras; check current limits at sign-up.
+- **Loom stays** for one-off and internal videos. It doesn't carry portal watch tracking.
+
+### 7A.6 Running cost (estimates at list price, check at sign-up)
+
+| Tool | For | Est. / month |
+|---|---|---|
+| Vercel | Hosting | $0 extra (existing Pro team) |
+| Neon | Database | $0–20 |
+| Inngest | Automations | $0 |
+| Resend | Email | $0–20 |
+| Cal.com | Booking (API access must be on the plan) | $0–15 |
+| Mux | Course video | $0–20 |
+| Twilio | Calls, SMS, recording, carrier registration | $10–30 |
+| Transcription | Phone calls | ~$1–5 |
+| E-sign (API) | FDD receipt + agreement | **$25–300: the swing item** (Q15) |
+| Sentry, Mapbox, Census, Turnstile, Meta CAPI, PostHog | | $0 on free tiers |
+
+Roughly **$40–100/month before e-sign**. Pipedrive (about $70) replaced none of these; dropping it adds only email sending and automations. The real ongoing cost is upkeep time (updates, deliverability, backups), kept low by buying the hard parts (email sending, e-sign, calendar, video, telephony, sign-in) and building only the CRM layer.
 
 ---
 
@@ -341,7 +437,7 @@ deal_stage_history id, deal_id, from_stage, to_stage, at, actor ('candidate'|'st
                    -- append-only; time in stage and drop-off come from here
 lost_reasons       id, label, active bool, sort
 meetings           id serial pk, deal_id, kind ('intro'|'m1'…'m5'|'territory'|'preconf'|'confday'),
-                   cal_uid unique, start_at, end_at, tz, booked_by ('candidate'|'staff'|'cal_direct'),
+                   cal_uid unique, start_at, end_at, tz, meet_url, booked_by ('candidate'|'staff'|'cal_direct'),
                    status ('booked'|'held'|'no_show'|'cancelled'|'rescheduled'),
                    held_at, duration_min, stage_before_booking, prep_ready_at
 meeting_captures   id, meeting_id, deal_id, capture_key, value jsonb, author_staff_id, at
@@ -518,7 +614,8 @@ rise-franchise-portal/
       settings/page.tsx
     api/
       lead/ booking/ track/ progress/ homework/ resources/ auth/
-      webhooks/calcom/ webhooks/docusign/ webhooks/resend/
+      webhooks/calcom/ webhooks/esign/ webhooks/resend/ webhooks/twilio/ webhooks/google/
+      inngest/                    automation functions endpoint
       cron/stale-deals/ cron/meeting-prep/ cron/followup-emails/ cron/backup/
   components/
     candidate/                    Hero, TerritorySearch, ReportMap, BookingPicker,
@@ -528,7 +625,8 @@ rise-franchise-portal/
   content/
     meetings.ts                   per-meeting captures + homework form refs (§6.3)
     chapters.ts                   portal chapter content
-    emails/                       follow-up email copy
+    emails/                       email copy
+    automations.ts                trigger / condition / action / stop rules (§7A.1)
   lib/
     stages.ts  deals.ts  portal-state.ts  gates.ts
     calcom.ts  docusign.ts  email.ts  track.ts  auth.ts
@@ -543,7 +641,7 @@ rise-franchise-portal/
 - **Domain:** add `franchise.risemodernwellness.com` to the new Vercel project; `CNAME` from wherever `risemodernwellness.com` DNS lives. The main site is untouched.
 - **Database per environment:** the Neon Vercel integration gives every preview deploy its own database branch, so previews never touch production data. Production → the main branch.
 - **Cal.com:** test event types for preview, real ones for production.
-- **Secrets (Vercel env vars):** `DATABASE_URL`, `SESSION_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `CALCOM_API_KEY`, `CALCOM_WEBHOOK_SECRET`, `DOCUSIGN_*`, `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `BLOB_READ_WRITE_TOKEN`, `MUX_TOKEN_ID`, `MUX_TOKEN_SECRET`, `TURNSTILE_SECRET`, `META_CAPI_TOKEN`, `CENSUS_API_KEY`, `MAPBOX_TOKEN`, `GOOGLE_PLACES_KEY`, `FIELD_ENCRYPTION_KEY`, `CRON_SECRET`. `PIPEDRIVE_API_TOKEN` only locally, for the import script.
+- **Secrets (Vercel env vars):** `DATABASE_URL`, `SESSION_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `CALCOM_API_KEY`, `CALCOM_WEBHOOK_SECRET`, `DOCUSIGN_*`, `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `BLOB_READ_WRITE_TOKEN`, `MUX_TOKEN_ID`, `MUX_TOKEN_SECRET`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_NUMBER`, `INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY`, `GOOGLE_MEET_OAUTH_*`, `TRANSCRIBE_API_KEY`, `TURNSTILE_SECRET`, `META_CAPI_TOKEN`, `CENSUS_API_KEY`, `MAPBOX_TOKEN`, `GOOGLE_PLACES_KEY`, `FIELD_ENCRYPTION_KEY`, `CRON_SECRET`. `PIPEDRIVE_API_TOKEN` only locally, for the import script.
 - **Observability:** Vercel logs + Sentry. Alert when a background job fails 5 times.
 - **Git:** set `user.email=admin@risemodernwellness.com` and `user.name=Garrett Ahlberg` before the first commit, or Vercel blocks the deploy.
 
@@ -613,3 +711,6 @@ Event naming: `object_action` with typed props, checked at compile time by `lib/
 | Q10 | Prep-ready nudge 24h before a call: none, web push, or Connecteam DM? | Garrett |
 | Q11 | Length of each call (sets the Cal.com event type durations) | Garrett |
 | Q12 | What creates new deals in Pipedrive today (the current lead form or automation)? It gets switched to the portal at launch. | Garrett / Claude to trace |
+| Q13 | Which automations run in Pipedrive today? Inventory them (screenshots, or Claude walks the automations page in Chrome) so each is rebuilt in §7A.1. | Garrett |
+| Q14 | Google Workspace plan: Business Starter, or Standard and up? Decides Meet-native transcripts vs a note-taker bot (§7A.4). Check admin.google.com → Billing → Subscriptions. | Garrett |
+| Q15 | E-sign tool for the FDD receipt and agreement: existing DocuSign account + API plan, a cheaper API (BoldSign, Dropbox Sign, Documenso), or manual at launch? Franchise counsel to confirm the tool is acceptable for FDD receipts. | Garrett + counsel |

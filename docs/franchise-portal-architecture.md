@@ -2,7 +2,7 @@
 
 **Domain:** `franchise.risemodernwellness.com`
 **Repo:** `rise-franchise-portal` (new, private). See §13.
-**Source designs:** canvas "RISE Franchise Landing Page Mockup". Boards `Main` (landing + opt-in), `Territory-Report` (report + intro-call booking), `Sales-Portal` (candidate portal).
+**Source designs:** canvas "RISE Franchise Landing Page Mockup". Boards `Main` (landing + opt-in), `Territory-Report` (availability result + intro-call booking; scoring/census content cut, §11A.3), `Sales-Portal` (candidate portal).
 **Systems:** one Next.js app on Vercel, one Postgres database (Neon), Cal.com + Google Meet, an e-sign provider, Resend (email), Twilio (calls + SMS), Inngest (automations), Mux (course video).
 **Revised:** 2026-11-06. This version drops Pipedrive as the store of record (§2). Earlier versions are in git history on this branch.
 
@@ -80,7 +80,7 @@ flowchart LR
   CAL["Cal.com"]
   DS["DocuSign"]
   MAIL["Resend"]
-  DATA["Census · Mapbox · Google Places"]
+  DATA["Google Places<br/>(city autocomplete)"]
   ADS["Meta CAPI · GA4"]
   VID["Mux (video)"]
   TW["Twilio<br/>calls · SMS · recordings"]
@@ -101,7 +101,7 @@ flowchart LR
   CL -- read-only role --> DB
 ```
 
-**Rule of thumb:** every screen reads from and writes to our database in the request. Slow or failure-prone side effects (email, Meta conversions, territory data, PDF rendering, DocuSign envelopes) go to a background job that retries. Nothing the candidate or Garrett does waits on a third party, except booking, which needs Cal.com's answer.
+**Rule of thumb:** every screen reads from and writes to our database in the request. Slow or failure-prone side effects (email, Meta conversions, DocuSign envelopes) go to a background job that retries. Nothing the candidate or Garrett does waits on a third party, except booking, which needs Cal.com's answer.
 
 ---
 
@@ -118,8 +118,8 @@ flowchart LR
 
 **`/portal` is the only candidate URL.** What it renders depends on the deal's stage:
 
-- **Territory Check** → territory report + Intro Call booking (the `Territory-Report` board)
-- **Intro Call Booked** → report + "your call is booked" card with reschedule / cancel
+- **Territory Check** → availability result ("Available" / "Already taken", §11A.3) + Intro Call booking (the `Territory-Report` board, trimmed)
+- **Intro Call Booked** → availability result + "your call is booked" card with reschedule / cancel
 - **Meeting 1 Booked** and later → the chapter portal (the `Sales-Portal` board), §5.3
 
 One bookmark, and one link in every email.
@@ -167,7 +167,7 @@ The stage list is a typed constant in code (`lib/stages.ts`). Deals store `stage
 
 | # | `stage_key` | Label | Before this meeting the candidate… | Chapter | Entered by |
 |---|---|---|---|---|---|
-| 1 | `territory_check` | Territory Check | Gets the report, is prompted to book | 1 · Your territory | Opt-in |
+| 1 | `territory_check` | Territory Check | Sees their city is available, is prompted to book | 1 · Your territory | Opt-in |
 | 2 | `intro_booked` | Intro Call Booked | Nothing. No homework before the intro. | 1 · Your territory | Booking |
 | 3 | `m1_booked` | Meeting 1 Booked · Business Overview | Video 1 (marketing, sales, delivery) + homework | 2 · The business | Booking |
 | 4 | `m2_booked` | Meeting 2 Booked · Marketing | Video 2 + homework | 3 · Marketing | Booking |
@@ -211,7 +211,7 @@ Deal in "X Booked" ──(call happens)──► Garrett marks meeting X: Held
 
 The **candidate** (a person) is permanent. A **deal** is one attempt to move that person through the pipeline.
 
-1. **Opt-in while a deal is open:** no new deal. Add a note to the open deal ("Re-requested report for <territory> on <date>"). Update the territory only if Garrett hasn't locked one.
+1. **Opt-in while a deal is open:** no new deal. Add a note to the open deal ("Re-checked <city, state> on <date>"). Update the city only if no Territory Meeting has been held yet.
 2. **Opt-in when every earlier deal is won or lost:** create a new open deal in `territory_check`. The old deal stays in history.
 3. **Net-worth gate fails** (Intro Call prep questions): deal → **Lost**, reason **"Below net worth minimum"**. No nurture stage. The candidate stays on file; nurture email segments on candidate + lost reason + last stage reached.
 4. **14-day booking window:** a deal in `territory_check` for 14 days with no Intro Call booked → **Lost**, reason **"No response"**.
@@ -219,7 +219,7 @@ The **candidate** (a person) is permanent. A **deal** is one attempt to move tha
    - **Enforced by** a nightly cron (`/api/cron/stale-deals`). Any booking stops the clock, because booking moves the deal out of the stage.
    - **Warning:** the deal shows as stalled on day 10 (`stalledAfterDays: 10`), so Garrett sees it before the cron closes it.
    - **Value-first follow-up emails** go out during the window, suggested days 2, 5, 10 and 13. Each teaches something first and asks for the booking second. Example topics: what the territory's numbers mean, Rachel's story, how a RISE location ramps, what really happens on the Intro Call.
-     - Every email links to the booking section of the candidate's report: `/r/<token>?to=book&src=email-<n>`.
+     - Every email links to the booking section of the candidate's portal: `/r/<token>?to=book&src=email-<n>`.
      - Sending stops the moment a call is booked or the deal closes. The job checks the stage right before each send.
      - `emails` + `events` record sent, opened and clicked. A booking made after an email click is credited to that email.
      - Copy lives in `content/emails/`.
@@ -390,7 +390,7 @@ New table: `transcripts (id, meeting_id null, call_id null, source 'meet'|'twili
 | Twilio | Calls, SMS, recording, carrier registration | $10–30 |
 | Transcription | Phone calls | ~$1–5 |
 | E-sign (API) | FDD receipt + agreement | **$25–300: the swing item** (Q15) |
-| Sentry, Mapbox, Census, Turnstile, Meta CAPI, PostHog | | $0 on free tiers |
+| Sentry, Google Places, Turnstile, Meta CAPI, PostHog | | $0 on free tiers |
 
 Roughly **$40–100/month before e-sign**. Pipedrive (about $70) replaced none of these; dropping it adds only email sending and automations. The real ongoing cost is upkeep time (updates, deliverability, backups), kept low by buying the hard parts (email sending, e-sign, calendar, video, telephony, sign-in) and building only the CRM layer.
 
@@ -400,9 +400,9 @@ Roughly **$40–100/month before e-sign**. Pipedrive (about $70) replaced none o
 
 ### 7.1 Candidates
 
-1. **On opt-in** the server upserts `candidates` by email, opens or reuses a deal (§5.4), and sets a signed, httpOnly cookie (`rise_session`). The candidate goes straight to their report.
+1. **On opt-in** the server upserts `candidates` by email, opens or reuses a deal (§5.4), and sets a signed, httpOnly cookie (`rise_session`). The candidate goes straight to their availability result.
 2. **The confirmation email** carries a magic link `/r/<token>`. The token is 32+ random bytes; only its hash is stored in `portal_tokens`, with an expiry. It's reusable until it expires or is revoked. Every email carries a fresh one. Clicking it sets the cookie and marks the email **verified**.
-3. **Two trust levels.** *Unverified* (just submitted the form): territory report and Intro Call booking. *Verified* (clicked an emailed link): everything sensitive, including financials, FDD, application, agreement.
+3. **Two trust levels.** *Unverified* (just submitted the form): availability result and Intro Call booking. *Verified* (clicked an emailed link): everything sensitive, including financials, FDD, application, agreement.
 4. **New device:** "Send me my portal link" emails a fresh magic link. No passwords.
 
 ### 7.2 Staff
@@ -422,9 +422,8 @@ candidates         id uuid pk, email citext unique, first_name, last_name, phone
 deals              id serial pk, candidate_id fk, status ('open'|'won'|'lost'),
                    stage_key, stage_entered_at, opened_at, closed_at,
                    lost_reason_id fk null, lost_comment,
-                   territory_id fk null, territory_label, territory_locked bool,
                    lead_source, attribution jsonb (utm_*, fbclid, gclid, referrer, landing),
-                   place_query, place_label, place_lat, place_lng, place_id,
+                   city, state, place_id,
                    months_looking int, owned_business_before bool, business_name,
                    net_worth_meets_min bool, net_worth_band, liquid_meets_min bool,
                    liquid_capital_band (bands encrypted), net_worth_verified bool,
@@ -451,8 +450,7 @@ progress           deal_id, chapter_key, step_key, status, pct, completed_at
 legal_records      id, candidate_id, deal_id, kind ('fdd_receipt'|'agreement'),
                    document_version, document_sha256, envelope_id, signed_name,
                    signed_at, ip, user_agent                       -- immutable
-territories        id, label, state, zips text[], geometry, status ('open'|'reserved'|'sold'),
-                   population, median_income, …
+taken_territories  id, city, state, store_name null, note, added_at, added_by   -- the ~33 sold; §11A.3
 emails             id, deal_id, template, n, sent_at, provider_id, opened_at, clicked_at
 events             id bigserial, candidate_id null, anon_id, deal_id null, name, props jsonb,
                    path, ts                                        -- append-only
@@ -556,7 +554,7 @@ computePortalState({
   fddReceiptSignedAt,         // for the 14-day gate
   verified,                   // email verified?
 }) => {
-  view: 'report' | 'report_booked' | 'portal' | 'gate' | 'closed' | 'owner',
+  view: 'available' | 'booked' | 'portal' | 'gate' | 'closed' | 'owner',
   currentChapter,             // 1..10
   chapters: [{ key, status: 'done' | 'now' | 'locked', steps: [...] }],
   nextAction,                 // "Watch: Meeting 2 video"
@@ -593,12 +591,15 @@ Every form is a versioned definition in `content/forms/` (e.g. `m2-homework@3`).
 - The same engine renders candidate homework (portal), Garrett's capture fields (call screen) and the booking questions (Intro Call booking).
 - A capture that's a **fact** still writes to its `deals` column (§6.3 rule); the form definition says which.
 
-### 11A.3 Territories (approach decided, sizing rule pending)
+### 11A.3 Territories: a simple yes or no (decided 2026-11-06)
 
-- **What the candidate types** (any city: Houston, Tomball, Spring) is stored on the deal as typed, plus its geocoded point and place id: `deals.place_query`, `place_label`, `place_lat`, `place_lng`, `place_id`.
-- **A territory** is a defined area: a set of ZIPs, sized by the rule in RISE's FDD (Item 12 / the franchise agreement). **Only sold and reserved territories exist as `territories` rows** (Kingwood and the other open stores). Everything else is open area.
-- **The report** shows the typed place on a map with nearby sold/reserved territories shaded, and says territories are available in that area. It never promises a specific territory; that's set at the Territory Meeting (`deals.territory_id`, `territory_locked`).
-- **Pending:** the sizing rule (Q16) and the import of existing store territories.
+**We sell RISE, not a territory score.** No census data, scoring or territory maps; they add noise and carry their own legal risk. The candidate gets a binary answer.
+
+- **Input:** one location field with Google Places Autocomplete, limited to US cities (`types: ['(cities)']`). The candidate can type a city or a ZIP, but must pick a city from the suggestions. We store only **city + state** (plus the Google place id): `deals.city`, `deals.state`, `deals.place_id`.
+- **Taken list:** `taken_territories (id, city, state, store_name null, note, added_at, added_by)`, starting with the ~33 territories already sold. Garrett can add or remove rows in `/admin/settings → Taken territories`, or ask Claude. When a deal is **Won**, its city is added automatically.
+- **Lookup:** case-insensitive match on city + state. Match → "Already taken" (with a soft next step to look at a nearby city or talk to Garrett). No match → "Available". Houston shows as available even though part of it has a store; which part is open is covered on the calls.
+- **Not now:** filtering out cities too small to qualify. Revisit only if it becomes a real problem.
+- The defined territory itself (ZIPs, boundaries) is set at the Territory Meeting and recorded in the franchise agreement, not in the app.
 
 ### 11A.4 Qualification data (schema decided, order pending)
 
@@ -646,7 +647,7 @@ rise-franchise-portal/
   app/
     (candidate)/
       page.tsx                    landing (from Main.dc.html)
-      portal/page.tsx             report / booked / chapter views
+      portal/page.tsx             availability / booked / chapter views
       portal/chapter/[key]/page.tsx
     r/[token]/route.ts            magic link
     admin/
@@ -662,7 +663,7 @@ rise-franchise-portal/
       inngest/                    automation functions endpoint
       cron/stale-deals/ cron/meeting-prep/ cron/followup-emails/ cron/backup/ cron/retention/
   components/
-    candidate/                    Hero, TerritorySearch, ReportMap, BookingPicker,
+    candidate/                    Hero, CitySearch, AvailabilityResult, BookingPicker,
                                   ChapterSheet, StepVideo, StepPdf, HomeworkForm, NextMeeting
     admin/                        CallHeader, PrepPanel, CaptureForm, OutcomeBar,
                                   NextMeetingPicker, PipelineList, Timeline
@@ -688,7 +689,7 @@ rise-franchise-portal/
 - **Vendor accounts (decided):** every service (Vercel, Neon, Mux, Resend, Twilio, Cal.com, Inngest, Sentry, e-sign) is registered to `admin@risemodernwellness.com`.
 - **Database per environment:** the Neon Vercel integration gives every preview deploy its own database branch, so previews never touch production data. Production → the main branch.
 - **Cal.com:** test event types for preview, real ones for production.
-- **Secrets (Vercel env vars):** `DATABASE_URL`, `SESSION_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `CALCOM_API_KEY`, `CALCOM_WEBHOOK_SECRET`, `DOCUSIGN_*`, `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `BLOB_READ_WRITE_TOKEN`, `MUX_TOKEN_ID`, `MUX_TOKEN_SECRET`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_NUMBER`, `INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY`, `GOOGLE_MEET_OAUTH_*`, `TRANSCRIBE_API_KEY`, `TURNSTILE_SECRET`, `META_CAPI_TOKEN`, `CENSUS_API_KEY`, `MAPBOX_TOKEN`, `GOOGLE_PLACES_KEY`, `FIELD_ENCRYPTION_KEY`, `CRON_SECRET`. `PIPEDRIVE_API_TOKEN` only locally, for the import script.
+- **Secrets (Vercel env vars):** `DATABASE_URL`, `SESSION_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `CALCOM_API_KEY`, `CALCOM_WEBHOOK_SECRET`, `DOCUSIGN_*`, `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `BLOB_READ_WRITE_TOKEN`, `MUX_TOKEN_ID`, `MUX_TOKEN_SECRET`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_NUMBER`, `INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY`, `GOOGLE_MEET_OAUTH_*`, `TRANSCRIBE_API_KEY`, `TURNSTILE_SECRET`, `META_CAPI_TOKEN`, `GOOGLE_PLACES_KEY`, `FIELD_ENCRYPTION_KEY`, `CRON_SECRET`. `PIPEDRIVE_API_TOKEN` only locally, for the import script.
 - **Observability:** Vercel logs + Sentry. Alert when a background job fails 5 times.
 - **Git:** set `user.email=admin@risemodernwellness.com` and `user.name=Garrett Ahlberg` before the first commit, or Vercel blocks the deploy.
 
@@ -699,7 +700,7 @@ rise-franchise-portal/
 | Endpoint | Auth | Purpose |
 |---|---|---|
 | `POST /api/lead` | Turnstile + rate limit | Opt-in (§5.4) |
-| `GET /api/territory/search?q=` | Public, rate limited | City/ZIP autocomplete |
+| `GET /api/territory/check?place_id=` | Public, rate limited | Resolve the picked place to city + state, return available / taken (autocomplete itself runs in the browser with Google Places) |
 | `GET /api/booking/slots` | Candidate or staff session | Cal.com availability for a meeting kind |
 | `POST /api/booking/prep` | Candidate session | Intro prep answers + net-worth gate |
 | `POST /api/booking/confirm` · `/reschedule` · `/cancel` | Candidate or staff session | Cal.com bookings |
@@ -725,7 +726,7 @@ rise-franchise-portal/
 | **Ad conversions** | `Lead` (opt-in), `Schedule` (Intro booked), later stage milestones | Meta Conversions API + Pixel (deduped by `event_id`), GA4 / Google Ads. Server-side, from jobs. |
 | **Product events** | Clicks, tabs, resource opens, video progress, PDF pages, form start/submit, time in chapter | `POST /api/track` → `events`. Optional mirror to PostHog for funnels and replay. |
 
-Event naming: `object_action` with typed props, checked at compile time by `lib/track.ts`. For example `cta_click {location}`, `territory_search {q}`, `territory_pick {zip}`, `lead_submit`, `report_tab {tab}`, `booking_slot_pick`, `booking_prep_answer {q, a}`, `booking_confirm`, `booking_gate`, `portal_chapter_view {chapter}`, `resource_open {id, type}`, `video_progress {id, pct}`, `pdf_page {id, page}`, `homework_submit {kind}`, `meeting_menu {action}`.
+Event naming: `object_action` with typed props, checked at compile time by `lib/track.ts`. For example `cta_click {location}`, `city_search {q}`, `city_pick {city, state}`, `availability_result {taken}`, `lead_submit`, `booking_slot_pick`, `booking_prep_answer {q, a}`, `booking_confirm`, `booking_gate`, `portal_chapter_view {chapter}`, `resource_open {id, type}`, `video_progress {id, pct}`, `pdf_page {id, page}`, `homework_submit {kind}`, `meeting_menu {action}`.
 
 ---
 
@@ -734,7 +735,7 @@ Event naming: `object_action` with typed props, checked at compile time by `lib/
 | Phase | Ships | Done when |
 |---|---|---|
 | **0. Foundations** | Repo, Vercel project, domain, Neon (+ preview branching), schema + `lib/deals.ts` with audit/history, staff Google sign-in, Cal.com event types | A preview deploy has its own database and Garrett can sign in to `/admin` |
-| **1. Opt-in → report** | Landing, territory search, `/api/lead`, candidate + deal creation, report page, PDF + magic-link email, attribution, Meta `Lead`, people import from Pipedrive (§12 step 1) | One real opt-in creates exactly one candidate + one deal in `territory_check` |
+| **1. Opt-in → availability** | Landing, city autocomplete, `taken_territories` seeded with the ~33 sold, `/api/lead`, candidate + deal creation, availability result, magic-link email, attribution, Meta `Lead`, people import from Pipedrive (§12 step 1) | One real opt-in creates exactly one candidate + one deal in `territory_check` |
 | **2. Booking + call screen** | Slots, prep questions, gate, booking, Cal.com webhook, next-meeting card. **Admin call screen for the Intro Call** (prep, capture, notes, outcome, book next). `/admin` today + pipeline list. Follow-up emails + stale-deals cron. | Garrett runs a real intro call from his phone and books Meeting 1 from the call screen |
 | **3. Portal core + course** | Candidate verification, `computePortalState`, chapters 1–6, Mux + PDF progress, homework forms, call screens for m1–m5, meeting-prep job, reporting views + `claude_ro` | Claude answers "who's stalled?" and the m3 call screen shows that candidate's homework |
 | **4. Full journey** | Territory / pre-conf / Confirmation Day screens, DocuSign FDD + agreement, 14-day gates, award + fee, `/admin/deals/[id]` timeline | A test candidate goes end-to-end to Won |
@@ -760,6 +761,6 @@ Event naming: `object_action` with typed props, checked at compile time by `lib/
 | Q12 | What creates new deals in Pipedrive today (the current lead form or automation)? It gets switched to the portal at launch. | Garrett / Claude to trace |
 | Q13 | Which automations run in Pipedrive today? Inventory them (screenshots, or Claude walks the automations page in Chrome) so each is rebuilt in §7A.1. | Garrett |
 | Q14 | Google Workspace plan: Business Starter, or Standard and up? Decides Meet-native transcripts vs a note-taker bot (§7A.4). Check admin.google.com → Billing → Subscriptions. | Garrett |
-| Q16 | Territory sizing rule: what RISE's FDD (Item 12 / franchise agreement) defines a territory as (ZIPs, population, radius), and where existing store territories are recorded for import. | Garrett + counsel |
+| Q16 | ~~Territory sizing~~ Decided: binary available / taken by city + state (§11A.3). Still needed: the list of the ~33 taken territories (city, state, store). | Garrett |
 | Q17 | Rachel's Google sign-in email for the staff allow list. | Garrett |
 | Q15 | E-sign tool for the FDD receipt and agreement: existing DocuSign account + API plan, a cheaper API (BoldSign, Dropbox Sign, Documenso), or manual at launch? Franchise counsel to confirm the tool is acceptable for FDD receipts. | Garrett + counsel |

@@ -80,8 +80,8 @@ flowchart LR
 You can keep `/report` and `/portal` as a single portal with stage-based views. That's what you described. The report is effectively **stage 0** of the portal. Recommended shape: **`/portal` is the only candidate URL.** What it renders depends on the stage:
 
 - Stage *Territory Check* → the report + Discovery Call booking widget (the `Territory-Report` board)
-- Stage *Discovery Call* → the report + "your call is booked" card + next meeting with reschedule/cancel
-- Stage *Alignment Pre-work* and later → the chapter portal (the `Sales-Portal` board), see §5.1
+- Stage *Discovery Call Booked* → the report + "your call is booked" card + next meeting with reschedule/cancel
+- Stage *Alignment Meeting Booked* and later → the chapter portal (the `Sales-Portal` board), see §5.1
 
 That gives the candidate one bookmark and one link in every email.
 
@@ -106,53 +106,81 @@ Sales team members viewing a candidate's portal: add `?as=<candidateId>` that on
 
 ## 5. Pipedrive design
 
-### 5.1 Pipeline 2.0 stages ↔ portal stages
+### 5.1 Pipeline 2.0 stages ↔ portal chapters
 
-Pipedrive stages should be the **gates a human cares about**. Portal stages can be finer-grained. Keep the mapping in one config file (`lib/stages.ts`), keyed by **Pipedrive stage ID, never by name** (names get renamed).
+#### The rule: stage or field?
 
-The real Pipeline 2.0 has **16 stages**. Most of them come in **pre-work → meeting pairs**, and that pair is the portal's building block:
+**A stage is a place a deal *waits*.** Add a stage only when all four are true:
 
-- **Pre-work stage:** the portal shows that chapter's videos, PDFs and forms. When every required item is done, the booking widget for the chapter's meeting unlocks.
-- **Booking the meeting** (Cal.com `BOOKING_CREATED`) → the app moves the deal to the **meeting stage**. The portal shows "you're prepared" plus the next-meeting card.
-- **After the meeting**, Garrett moves the deal to the next pre-work stage. That's the human gate: the meeting is where he decides fit. `MEETING_ENDED` only creates a reminder task, it never moves the deal.
+1. Deals can sit there for days (time in stage means something).
+2. A different next action is owed: by the candidate, by Garrett, or by the calendar.
+3. You want drop-off reported at that point.
+4. The portal shows the candidate something different there.
 
-Rule: **being in a meeting stage means the meeting is booked.** Whether it happened is recorded on the Pipedrive activity (done / no-show).
+**Everything else is data on the deal:**
 
-The candidate sees **8 chapters**, not 16 stages; internal stage names never show in the portal.
+| Kind of fact | Where it lives | Examples |
+|---|---|---|
+| The outcome of an event | The meeting's **Pipedrive activity**: done, or no-show | Showed / no-show for every call |
+| When a milestone happened | A **date field** | `FDD receipt signed at`, `Last meeting held at` |
+| A checklist inside a stage | **Portal progress** (app DB) + one summary field | `Pre-work status`: Not started / In progress / Complete |
+| A qualification | A **field** | `Net worth band`, `Proof of funds verified` |
+| How many times something happened | A **number field** | `No-show count` |
 
-| # | Pipeline 2.0 stage | Portal chapter | Candidate sees | Moved in by |
+"Showed" fails test 1: Garrett books the next meeting live on the call, so a "showed" stage would hold a deal for seconds. It's an **event**, so it belongs on the meeting's activity, not in a stage. For the same reason, separate **pre-work stages** don't survive live booking either. The candidate does the pre-work *while* they're booked for the next meeting.
+
+#### The pipeline: one stage per "booked for the next meeting"
+
+Each stage means **"this is the next thing on the calendar, and it hasn't happened yet."** Garrett books the next meeting live, and the Cal.com webhook moves the deal straight from one "booked" stage to the next.
+
+| # | Stage (proposed rename) | Waiting on | Portal chapter: what the candidate sees | Moved in by |
 |---|---|---|---|---|
-| 1 | Territory Check | 1 · Your territory | Report + book Discovery Call | App, on opt-in |
-| 2 | Market Availability Check | 1 · Your territory | **Open question (Q1):** overlaps with stage 1 as the app works now | — |
-| 3 | Discovery Call | 1 · Your territory | Booked card + next meeting | App, on booking |
-| 4 | Alignment Pre-work | 2 · Alignment | Welcome from Garrett, "Tell us about you", unit-economics video, pitch deck, financial snapshot | Garrett, after the call |
-| 5 | Alignment Meeting | 2 · Alignment | Prepared + meeting card | App, on booking |
-| 6 | Skills Pre-work | 3 · Skills | "What we look for in an owner", application form | Garrett |
-| 7 | Skills Meeting | 3 · Skills | Prepared + meeting card | App, on booking |
-| 8 | FDD Pre-work | 4 · FDD | FDD + reading guide, receipt (DocuSign). **14-day clock starts at receipt.** | Garrett |
-| 9 | FDD Review Meeting | 4 · FDD | Prepared + meeting card | App, on booking (needs signed receipt) |
-| 10 | Territory Pre-Work | 5 · Territory | "How we draw a territory", territory preferences, **proof of funds** (proposed) | Garrett |
-| 11 | Territory Meeting | 5 · Territory | Prepared + meeting card | App, on booking |
-| 12 | Pre-Confirmation Day Meeting | 6 · Confirmation Day | **Validation calls** with owners (proposed), "What to expect", pick the Confirmation Day date, prep meeting card | Garrett |
-| 13 | Confirmation Day | 6 · Confirmation Day | Day agenda, travel details, who you'll meet | Garrett |
-| 14 | Preparing To Accept Award | 7 · Award | Note from Rachel and Garrett, agreement to review with an attorney | Garrett / Rachel |
-| 15 | Franchise Agreement Signed (rename of "FFD Signed") | 7 · Award | DocuSign agreement. **Locked until 14 days after FDD receipt.** | DocuSign webhook |
-| 16 | Franchise Fee Collected | 8 · Welcome to RISE | First 90 days, onboarding | Garrett; deal then marked **Won** |
-| — | Lost (with a lost reason) | — | Net-worth gate: "Thanks for being upfront". Other reasons: a "welcome back any time" view with a button to request a new report | App (net-worth gate, 14-day rule) or Garrett |
+| 1 | **Territory Check** | Candidate to book | 1 · Your territory: report + book Discovery Call + value-first emails | App, on opt-in |
+| 2 | **Discovery Call Booked** | Call to happen | 1 · Your territory: booked card | App, on self-serve booking |
+| 3 | **Alignment Meeting Booked** | Meeting + pre-work | 2 · Alignment: welcome video, "Tell us about you", unit economics, pitch deck, financial snapshot | App, on booking (Garrett books live) |
+| 4 | **Skills Meeting Booked** | Meeting + pre-work | 3 · Skills: "What we look for", application | App, on booking |
+| 5 | **FDD Review Meeting Booked** | Meeting + FDD receipt | 4 · FDD: FDD, reading guide, receipt (DocuSign). **14-day clock starts at receipt.** | App, on booking |
+| 6 | **Territory Meeting Booked** | Meeting + pre-work | 5 · Territory: "How we draw a territory", preferences, proof of funds | App, on booking |
+| 7 | **Pre-Confirmation Meeting Booked** | Meeting + validation calls | 6 · Confirmation Day: owner contact list, validation-call check-in | App, on booking |
+| 8 | **Confirmation Day Booked** | The day itself | 6 · Confirmation Day: agenda, travel, who you'll meet | App, on booking |
+| 9 | **Preparing To Accept Award** | RISE decision + paperwork | 7 · Award: note from Rachel and Garrett, agreement to review with an attorney | Garrett / Rachel |
+| 10 | **Franchise Agreement Signed** | Fee payment | 7 · Award: signed copy, payment instructions. **Unlocks only 14+ days after FDD receipt.** | DocuSign webhook |
+| 11 | **Franchise Fee Collected** → deal **Won** | — | 8 · Welcome to RISE: first 90 days | Garrett. Also blocked until 14+ days after FDD receipt. |
 
-**Changes recommended to the pipeline:**
-1. **Rename stage 15** from "FFD Signed" to **"Franchise Agreement Signed".** "FFD" reads as a typo of FDD. The FDD *receipt* happens at stage 8, and mixing the two up is exactly the confusion that causes compliance mistakes.
-2. **Settle stage 2.** Opt-in, report and availability are the same moment in the app, so "Territory Check" and "Market Availability Check" overlap (see Q1).
-3. **Give proof of funds and validation calls a home.** They were stages in the mockup but have no stage in Pipeline 2.0. Proposed: proof of funds as Territory pre-work, validation calls as Pre-Confirmation work. They live in the portal as pre-work items, not as new stages.
-4. **Won = stage 16.** "Franchise Fee Collected" is the end; mark the deal Won there so reports and the portal's owner view key off status, not stage name.
-5. **FTC 14-day rule, enforced twice:** neither stage 15 (signing) nor stage 16 (any fee) can unlock until 14 calendar days after the FDD receipt from stage 8.
+That's **16 stages down to 11**. What's gone: the pre-work stages (folded into each "Booked" stage as portal progress) and Market Availability Check (it was the same moment as Territory Check).
 
-**Cal.com event types needed:** Discovery Call, Alignment Meeting, Skills Meeting, FDD Review Meeting, Territory Meeting, Pre-Confirmation Day Meeting, plus Confirmation Day (a date picker limited to the days you host it).
+#### What happens at each meeting
+
+```text
+Booked for meeting X ──(meeting happens)──► activity X marked DONE
+   │                                            │
+   │                                Garrett books meeting Y live
+   │                                            ▼
+   │                               deal → "Y Booked" (webhook)
+   │
+   ├─(no-show)──► activity X = NO-SHOW, No-show count +1,
+   │              portal + email: "Pick a new time" (same meeting X).
+   │              Deal stays in "X Booked".
+   │
+   └─(showed, nothing booked yet)──► deal stays in "X Booked" with X done.
+                  Rotting flags it, the portal shows "Book your next meeting" (meeting Y).
+```
+
+- **Bookings Garrett makes live** (in Cal.com or a "next step" button on a staff page) don't carry the portal's metadata. The webhook matches them by attendee email to the candidate's **open** deal, so either booking path works.
+- **Pre-work gate:** the portal shows that chapter's pre-work, and `Pre-work status` tells Garrett before the meeting whether it's done. Reminder emails go out at 72h and 24h if it isn't. The meeting is **not** blocked by unfinished pre-work, because Garrett booked it live.
+- **The portal reads one thing:** the stage = which chapter is current. Everything finer comes from progress in the app DB.
+
+#### Reports this gives you
+
+- **Show rate per meeting:** activities of each type, done vs no-show.
+- **Booking lag:** time in each "Booked" stage = days from booking to meeting, plus any no-show recovery.
+- **Drop-off:** deals lost while in each stage, by lost reason.
+- **Pre-work completion before meetings:** from `Pre-work status` at meeting time.
 
 Two kinds of stage advance:
 
-- **Self-serve gates:** the candidate finishes the pre-work and books the meeting, and the app moves the deal to the meeting stage through the API.
-- **Human gates** (every move out of a meeting stage, plus award and fee): the app sets `Ready for review = yes` and creates a Pipedrive activity for Garrett. Garrett moves the stage, and the webhook unlocks the next chapter.
+- **Automatic:** every "Booked" stage is entered by the Cal.com booking webhook, whoever made the booking.
+- **Human:** award, agreement and fee are moved by Garrett, Rachel or DocuSign. Lost is set by Garrett, the net-worth gate, or the no-booking rules in §5.2.
 
 ### 5.2 Deal lifecycle rules (decided)
 
@@ -181,7 +209,7 @@ Lost reasons must be a **fixed list** (Pipedrive → Settings → Company settin
 
 ### 5.3 Custom fields to create on the Deal
 
-`Portal ID` (candidate UUID), `Territory` (text), `Territory ZIPs`, `Territory status` (open/sold), `Lead source`, `UTM source/medium/campaign`, `Click ID` (fbclid/gclid), `Months looking`, `Owned business before` and `Business name`, `Net worth band`, `Liquid capital band`, `Funding plan`, `Target open`, `FDD sent at`, `FDD receipt signed at`, `Portal last active`, `Portal stage progress` (e.g. "Stage 3 · 2/3 steps"), `Ready for review` (yes/no).
+`Portal ID` (candidate UUID), `Territory` (text), `Territory ZIPs`, `Territory status` (open/sold), `Lead source`, `UTM source/medium/campaign`, `Click ID` (fbclid/gclid), `Months looking`, `Owned business before` and `Business name`, `Net worth band`, `Liquid capital band`, `Funding plan`, `Target open`, `FDD sent at`, `FDD receipt signed at`, `Portal last active`, `Pre-work status` (Not started / In progress / Complete), `Pre-work progress` (e.g. "2/3"), `No-show count`, `Last meeting held at`, `Next meeting at`, `Proof of funds verified` (yes/no), `Validation calls done` (number), `Ready for review` (yes/no).
 
 Put **stable facts and milestones** in fields. Put **narrative answers** ("What would owning a RISE location change for you?") in a **Pipedrive note** on the deal so Garrett reads them in context.
 
@@ -260,7 +288,7 @@ sequenceDiagram
     C-->>A: booking uid
     A->>D: bookings row
     C->>W: BOOKING_CREATED (signed)
-    W->>P: create activity "Discovery Call" on deal, move deal → Discovery Call
+    W->>P: create activity "Discovery Call" on deal, move deal → Discovery Call Booked
   end
 ```
 
@@ -274,9 +302,9 @@ sequenceDiagram
 
 | Cal.com trigger | App DB | Pipedrive |
 |---|---|---|
-| `BOOKING_CREATED` | insert `bookings` | create activity (type: call, due = start), move deal to that event type's meeting stage (Discovery Call, Alignment Meeting, …) |
+| `BOOKING_CREATED` | insert `bookings` | create activity (type: call, due = start), move the deal to that event type's "Booked" stage (Discovery Call Booked, Alignment Meeting Booked, …); bookings without metadata are matched by attendee email to the open deal |
 | `BOOKING_RESCHEDULED` | update times | update the same activity (store `pipedrive_activity_id` on the booking row) |
-| `BOOKING_CANCELLED` | mark cancelled | mark activity done/deleted, move deal back to the stage before the meeting (Territory Check or the chapter's pre-work) |
+| `BOOKING_CANCELLED` | mark cancelled | mark activity done/deleted, move the deal back to the stage it came from (stored on the booking row) |
 | `MEETING_ENDED` / no-show | mark completed or no-show | mark the activity done or no-show, and create a task for Garrett to move the deal (never auto-move) |
 
 **Pick one integration path.** If you use these webhooks, **don't also install Cal.com's native Pipedrive app**, or every booking creates duplicate activities. The native app matches on email and can't tell which deal a booking belongs to. Your webhook can.
@@ -285,7 +313,7 @@ sequenceDiagram
 
 - Read from `bookings` (the next future, non-cancelled booking for the candidate). No Cal.com call on page load.
 - Menu actions: **Reschedule** (your picker → `POST /v2/bookings/{uid}/reschedule`, or Cal.com's hosted reschedule link), **Cancel** (`POST /v2/bookings/{uid}/cancel` with a reason), **Add to calendar** (generate an `.ics` file).
-- Each chapter meeting is its own Cal.com event type (see §5.1), with a booking widget that unlocks when that chapter's pre-work is done.
+- Each chapter meeting is its own Cal.com event type (see §5.1). Garrett normally books the next one live; the portal's "Book your next meeting" widget is the fallback when he didn't.
 
 ---
 
